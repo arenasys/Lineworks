@@ -1,0 +1,8 @@
+wheel==0.41.2
+pip==23.2.1
+Pillow==9.5.0
+PyQt5==5.15.7
+pygit2==1.12.1
+websockets==11.0.3
+bson==0.5.10
+cryptography==40.0.2

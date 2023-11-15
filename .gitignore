@@ -1,0 +1,10 @@
+source/qml/qml_rc.py
+source/qml/qml.rc
+*.log
+.vscode
+__pycache__
+*/__pycache__
+venv
+python
+crash.log
+config.json

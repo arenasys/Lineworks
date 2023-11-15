@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <radialGradient id="radialGradient7-8" cx="149.92" cy="153.11" r="93.343" gradientTransform="matrix(.93924 0 0 1.0231 -2.269 -9.2075)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#00bc9a" offset=".4543"/>
+   <stop stop-color="#00caaf" offset="1"/>
+  </radialGradient>
+  <radialGradient id="radialGradient9-8" cx="149.92" cy="153.11" r="93.343" gradientTransform="matrix(.93924 0 0 1.0231 -2.269 -9.2075)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#00bc9a" offset=".45429"/>
+   <stop stop-color="#00caaf" offset="1"/>
+  </radialGradient>
+ </defs>
+ <path d="m46.335 34.269c3.8705 4.1054 5.6768 11.38 10.943 13.343 0 0 39.611 7.6216 41.798 7.8532 6.0876 0.6449 17.695 3.9634 18.386 19.849v105.38c-0.67055 15.402-11.612 18.987-17.824 19.777-2.4933 0.3171-41.054 5.687-41.054 5.687-7.8246 1.538-10.249 10.041-14.613 15.572h168.06c-4.3638-5.5308-6.788-14.034-14.613-15.572 0 0-38.56-5.3698-41.054-5.687-6.212-0.79008-17.153-4.3753-17.824-19.777v-105.38c0.69131-15.885 12.298-19.204 18.386-19.849 2.187-0.23169 41.798-7.8532 41.798-7.8532 5.2657-1.9625 7.0722-9.2373 10.943-13.343h-81.666z" fill="url(#radialGradient7-8)" stroke="url(#radialGradient9-8)" stroke-width="12"/>
+</svg>
