@@ -519,7 +519,7 @@ class GUI(QObject):
             models = response["data"]["models"]
 
             self._model_parameters.set("model_paths", models)
-            if not model in models:
+            if not model in models and models:
                 self._model_parameters.set("model_path", models[0])
             if not models:
                 self._model_parameters.set("model_path", "")
