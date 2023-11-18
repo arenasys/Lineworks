@@ -127,14 +127,13 @@ SDialog {
                             STextSelectable {
                                 id: versionLabel
                                 visible: !updateSpinner.visible && !restartLabel.visible
-                                anchors.fill: parent
+                                anchors.centerIn: parent
 
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
 
                                 color: COMMON.fg2
-                                monospace: true
-                                pointSize: 8.5
+                                pointSize: 9.0
                                 text: GUI.versionInfo
                             }
 
