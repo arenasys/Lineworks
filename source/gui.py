@@ -397,6 +397,8 @@ class GUI(QObject):
         elif not self._triedGitInit:
             self._triedGitInit = True
             git.gitInit(".", SOURCE_REPO)
+            self.getVersionInfo()
+            return
         self.updated.emit()
 
     @pyqtSlot()
