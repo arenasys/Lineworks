@@ -38,6 +38,7 @@ Item {
         anchors.centerIn: parent
         smooth: parent.smooth
         antialiasing: parent.smooth
+        visible: !COMMON.light
     }
 
     ColorOverlay {

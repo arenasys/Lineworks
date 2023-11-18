@@ -1,11 +1,12 @@
 import os
 
-from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, QObject, QUrl, QThread, QMimeData, QByteArray, QSize
+from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, QObject, QUrl, QThread, QMimeData, QByteArray, QSize, QPoint
 from PyQt5.QtGui import QDrag, QColor, QImage, QSyntaxHighlighter, QColor, QBrush, QTextCharFormat
 from PyQt5.QtQml import qmlRegisterUncreatableType
 from PyQt5.QtQuick import QQuickTextDocument, QQuickImageProvider
 
 MIME_POSITION = "application/x-lineworks-position"
+MIME_POSITION_AREA = "application/x-lineworks-position-area"
 INVERSE_POSITION = {"T":"B","B":"T","L":"R","R":"L"}
 MARK = 0x00AD
 
@@ -30,6 +31,7 @@ class Tab(QObject):
     nameUpdated = pyqtSignal()
     contentUpdated = pyqtSignal()
     markerUpdated = pyqtSignal()
+    lastUpdated = pyqtSignal()
     insert = pyqtSignal(int, str)
     def __init__(self, parent, name):
         super().__init__(parent)
@@ -40,6 +42,7 @@ class Tab(QObject):
         self._marker = 6
 
         self._last = ""
+        self._history = []
 
     @pyqtProperty(str, notify=nameUpdated)
     def name(self):
@@ -63,15 +66,20 @@ class Tab(QObject):
     def content(self, text):
         mark = chr(MARK)
         if mark in text:
-            self.marker = text.index(mark)
+            marker = text.index(mark)
         else:
             marker = min(self.marker, len(text))
             text = text[:marker] + chr(MARK) + text[marker:]
-            self.marker = marker
         
         if text != self._content:
             self._content = text
             self.contentUpdated.emit()
+        
+        if marker != self._marker:
+            self._marker = marker
+            self.markerUpdated.emit()
+
+        self.lastUpdated.emit()
 
     @pyqtProperty(int, notify=markerUpdated)
     def marker(self):
@@ -82,6 +90,7 @@ class Tab(QObject):
         if marker != self._marker:
             self._marker = marker
             self.markerUpdated.emit()
+            self.lastUpdated.emit()
     
     @pyqtSlot(int)
     def moveMarker(self, marker):
@@ -103,24 +112,66 @@ class Tab(QObject):
     def setHighlighting(self, doc):
         self._highlighter.setDocument(doc.textDocument())
 
-    def revert(self):
+    @pyqtProperty(list, notify=lastUpdated)
+    def last(self):
         if not self._last:
-            return
+            return []
+        
+        marker = self.lastStart()
+        if not marker:
+            return []
+        
+        text = self._content[marker:self._marker+1]
+
+        segments = []
+        segment = 0
+        for i in range(len(text)+1):
+            if i == len(text) or text[i].isspace():
+                if segment != None:
+                    segments += [QPoint(marker+segment, marker+i)]
+                    segment = None
+                
+                if i != len(text) and text[i] == '\n' and (i == 0 or text[i-1] == '\n'):
+                    segments += [QPoint(marker+i, marker+i)]
+                continue
+            if segment == None:
+                segment = i
+
+        return segments
+
+    def lastStart(self):
+        if not self._last:
+            return None
 
         marker = None
+
         for i in range(1, len(self._last)+1):
             a = self._content[self._marker-i]
             b = self._last[-i]
             if a != b:
                 break
             marker = self._marker-i
+        
+        return marker
 
-        self._last = ""
+    def revert(self):
+        if not self._last:
+            return
+
+        marker = self.lastStart()
+
+        if self._history:
+            self._last = self._history.pop()
+        else:
+            self._last = ""
+        
         if marker:
             text = self._content[:marker] + chr(MARK) + self._content[self._marker+1:]
             self.content = text
     
     def startStream(self):
+        if self._last:
+            self._history += [self._last]
         self._last = ""
     
     @pyqtSlot(str)
@@ -168,28 +219,33 @@ class TabArea(QObject):
         self._current = 0
         self._position = position
     
-    def addTab(self, tab):
+    def addTab(self, tab, signal=True):
         self._tabs += [tab]
-        self.tabsUpdated.emit()
+        if signal:
+            self.tabsUpdated.emit()
 
-    def insertTab(self, tab, index):
+    def insertTab(self, tab, index, signal=True):
         if index == -1:
             self._tabs += [tab]
         else:
             self._tabs.insert(index, tab)
-        self.tabsUpdated.emit()
+        if signal:
+            self.tabsUpdated.emit()
 
-    def removeTab(self, tab):
+    def removeTab(self, tab, signal=True):
         self._tabs.remove(tab)
-        self.tabsUpdated.emit()
+        if signal:   
+            self.tabsUpdated.emit()
         if self._current >= len(self._tabs):
             self._current = len(self._tabs) - 1
-            self.currentUpdated.emit()
+            if signal:
+                self.currentUpdated.emit()
 
     @pyqtSlot()
     def newTab(self):
         tab = Tab(self, self.parent().getNewTabName())
         self.addTab(tab)
+        self.current = len(self._tabs)-1
         
     @pyqtProperty(list, notify=tabsUpdated)
     def tabs(self):
@@ -198,6 +254,11 @@ class TabArea(QObject):
     @pyqtProperty(str, notify=positionUpdated)
     def position(self):
         return self._position
+    
+    @position.setter
+    def position(self, position):
+        self._position = position
+        self.positionUpdated.emit()
     
     @pyqtProperty(int, notify=currentUpdated)
     def current(self):
@@ -210,6 +271,27 @@ class TabArea(QObject):
             return
         self._current = current
         self.currentUpdated.emit()
+
+    @pyqtSlot()
+    def nextTab(self):
+        index = min(self._current + 1, len(self._tabs) - 1)
+        if index != self._current:
+            self._current = index
+            self.currentUpdated.emit()
+
+    @pyqtSlot()
+    def prevTab(self):
+        index = max(self._current - 1, 0)
+        if index != self._current:
+            self._current = index
+            self.currentUpdated.emit()
+
+    @pyqtSlot(int)
+    def setTab(self, index):
+        index -= 1
+        if index < len(self._tabs) and index != self._current:
+            self._current = index
+            self.currentUpdated.emit()
 
     def expandArea(self, position):
         for o in position:
@@ -247,6 +329,7 @@ class Tabs(QObject):
         super().__init__(gui)
         self.gui = gui
         self._draggedTab = None
+        self._draggedArea = None
         self._areas = []
         self._current = None
 
@@ -331,8 +414,12 @@ class Tabs(QObject):
             f.write(text)
 
     @pyqtProperty(bool, notify=dragUpdated)
-    def dragging(self):
+    def draggingTab(self):
         return self._draggedTab != None
+    
+    @pyqtProperty(bool, notify=dragUpdated)
+    def draggingArea(self):
+        return self._draggedArea != None
     
     @pyqtSlot(Tab)
     def dragTab(self, tab):
@@ -362,6 +449,18 @@ class Tabs(QObject):
         drag.setMimeData(mimeData)
         drag.exec()
         self._draggedTab = None
+        self.dragUpdated.emit()
+
+    @pyqtSlot(TabArea)
+    def dragArea(self, area):
+        self._draggedArea = area
+        self.dragUpdated.emit()
+        mimeData = QMimeData()
+        mimeData.setData(MIME_POSITION_AREA, QByteArray(f"POSITION".encode()))
+        drag = QDrag(self)
+        drag.setMimeData(mimeData)
+        drag.exec()
+        self._draggedArea = None
         self.dragUpdated.emit()
 
     @pyqtSlot(TabArea, str)
@@ -396,15 +495,35 @@ class Tabs(QObject):
                 if indexTab == tab:
                     return
                 if sourceArea:
-                    sourceArea.removeTab(tab)
+                    sourceArea.removeTab(tab, sourceArea != targetArea)
                 index = targetArea._tabs.index(indexTab)
             else:
                 if sourceArea:
-                    sourceArea.removeTab(tab)
+                    sourceArea.removeTab(tab, sourceArea != targetArea)
             targetArea.insertTab(tab, index)
+            targetArea.currentUpdated.emit()
         
         if tab in targetArea._tabs:
             targetArea.current = targetArea._tabs.index(tab)
+
+    @pyqtSlot(TabArea, str)
+    def dropArea(self, area, target):
+        sourceArea = self._draggedArea
+        targetArea = area
+
+        if sourceArea == targetArea:
+            return
+
+        self._areas.remove(sourceArea)
+        self.expandAreas()
+        self.areasUpdated.emit()
+
+        position = targetArea.splitArea(target)
+        sourceArea.position = position
+        self._areas += [sourceArea]
+        self.areasUpdated.emit()
+
+        self.current = area
         
     @pyqtProperty(TabArea, notify=currentUpdated)
     def current(self):
@@ -412,8 +531,40 @@ class Tabs(QObject):
     
     @current.setter
     def current(self, current):
-        self._current = current
-        self.currentUpdated.emit()
+        if(current != self._current):
+            self._current = current
+            self.currentUpdated.emit()
+
+    def currentTab(self):
+        return self._current._tabs[self._current._current]
+
+    @pyqtSlot()
+    def nextArea(self):
+        area = None
+        if self._current in self._areas:
+            index = self._areas.index(self._current)
+            index = (index + 1) % len(self._areas)
+            area = self._areas[index]
+        elif self._areas:
+            area = self._areas[0]
+
+        if area and area != self._current:
+            self._current = area
+            self.currentUpdated.emit()
+
+    @pyqtSlot()
+    def prevArea(self):
+        area = None
+        if self._current in self._areas:
+            index = self._areas.index(self._current)
+            index = (index - 1) % len(self._areas)
+            area = self._areas[index]
+        elif self._areas:
+            area = self._areas[0]
+
+        if area and area != self._current:
+            self._current = area
+            self.currentUpdated.emit()
 
     def getTabCount(self):
         count = 0

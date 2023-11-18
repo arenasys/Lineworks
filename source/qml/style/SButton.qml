@@ -38,12 +38,13 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             anchors.fill: parent
             pointSize: 9.8
-            color: COMMON.fg1
+            color: COMMON.fg1_5
         }
 
         Rectangle {
             anchors.fill: parent
             visible: root.disabled
+            opacity: COMMON.factor
             color: "#a0101010"
         }
     }

@@ -75,6 +75,26 @@ Rectangle {
         root.position()
     }
 
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        property var startPosition: Qt.point(0,0)
+
+
+        onPressed: {
+            startPosition = Qt.point(mouse.x, mouse.y)
+        }
+
+        onPositionChanged: {
+            if(pressedButtons & Qt.LeftButton) {
+                var delta = Qt.point(mouse.x-startPosition.x, mouse.y-startPosition.y)
+                if(Math.pow(delta.x*delta.x + delta.y*delta.y, 0.5) > 15) {
+                    GUI.tabs.dragArea(root.area)
+                }
+            }
+        }
+    }
+
     Item {
         anchors.fill: parent
         anchors.margins: 5
@@ -92,11 +112,23 @@ Rectangle {
                 Rectangle {
                     id: tab
                     property var current: root.area.current == index
+                    property var working: modelData == GUI.workingTab
+                    
                     width: tabLabel.width
                     height: 25
-                    color: COMMON.bg3
-                    border.color: COMMON.bg4
+
+                    color: current ? (root.inactive ? COMMON.bg1_5 : COMMON.bg3) : COMMON.bg0_5
+                    border.color: current ? (root.inactive ? COMMON.bg3 : COMMON.bg4) : COMMON.bg2_5
                     z: current ? 10 : 0
+
+                    WorkingLine {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 1
+                        height: 2
+                        visible: working
+                    }
 
                     AdvancedDropArea {
                         anchors.left: parent.left
@@ -108,7 +140,7 @@ Rectangle {
                         filters: ['application/x-lineworks-position']
 
                         Rectangle {
-                            visible: GUI.tabs.dragging
+                            visible: GUI.tabs.draggingTab
                             opacity: 0.5
                             anchors.left: parent.left
                             anchors.leftMargin: 20
@@ -147,11 +179,11 @@ Rectangle {
                         }
                     }
 
-                    Rectangle {
+                    /*Rectangle {
                         color: "black"
                         opacity: current ? (root.inactive ? 0.2 : 0.0) : 0.35
                         anchors.fill: parent
-                    }
+                    }*/
 
                     MouseArea {
                         anchors.fill: parent
@@ -217,21 +249,16 @@ Rectangle {
             Rectangle {
                 height: 25
                 width: 25
-                color: COMMON.bg3
-                border.color: COMMON.bg4
-
-                Rectangle {
-                    color: "black"
-                    opacity: 0.35
-                    anchors.fill: parent
-                }
+                color: COMMON.bg0
+                border.color: COMMON.bg2
 
                 SIconButton {
                     color: "transparent"
                     anchors.fill: parent
                     anchors.margins: 1
                     icon: "qrc:/icons/plus.svg"
-                    iconHoverColor: COMMON.fg2
+                    iconColor: COMMON.bg4
+                    iconHoverColor: COMMON.bg7
 
                     onPressed: {
                         root.area.newTab()
@@ -250,7 +277,7 @@ Rectangle {
             z: 100
 
             Rectangle {
-                visible: GUI.tabs.dragging
+                visible: GUI.tabs.draggingTab
                 opacity: 0.5
                 anchors.left: parent.left
                 anchors.leftMargin: -width + 20
@@ -294,7 +321,10 @@ Rectangle {
                 anchors.fill: parent
                 currentIndex: root.area.current
                 Repeater {
-                    model: root.area.tabs
+                    model: ArrayModel {
+                        source: root.area != undefined ? root.area.tabs : []
+                        unique: true
+                    }
                     Item {
                         Rectangle {
                             id: content
@@ -308,7 +338,125 @@ Rectangle {
                             anchors.leftMargin: 0
                             anchors.rightMargin: 0
                             clip: true
-                            
+
+                            property var working: modelData == GUI.workingTab
+
+                            function focus() {
+                                textArea.forceActiveFocus()
+                            }
+
+                            Connections {
+                                target: root.area
+                                function onCurrentChanged() {
+                                    if(root.area.current == index) {
+                                        content.focus()
+                                    }
+                                }
+                            }
+
+                            Connections {
+                                target: GUI.tabs
+                                function onCurrentChanged() {
+                                    if(root.area == GUI.tabs.current && root.area.current == index) {
+                                        content.focus()
+                                    }
+                                }
+                            }
+
+                            Item {
+                                id: last
+                                signal layout()
+
+                                Repeater {
+                                    model: ArrayModel {
+                                        id: indicators
+                                        source: modelData.last
+                                    }
+                                    
+                                    Rectangle {
+                                        id: indicator
+                                        function layout() {
+                                            var p = modelData
+
+                                            var l = textArea.area.text.length
+
+                                            if(p.x >= l || p.y >= l) {
+                                                indicator.position = Qt.rect(0,0,0,0)
+                                            }
+
+                                            var start = textArea.getPositionRectangle(p.x)
+                                            var end = textArea.getPositionRectangle(p.y)
+
+                                            if(start.y != end.y) {
+                                                var end_tmp = textArea.getPositionRectangle(p.y-1)
+                                                if(start.y != end_tmp.y) {
+                                                    var start_tmp = textArea.getPositionRectangle(p.x+1)
+                                                    if(start_tmp.y == end_tmp.y) {
+                                                        start = start_tmp
+                                                    } else {
+                                                        console.log("ERR")
+                                                    }
+                                                } else {
+                                                    end = end_tmp
+                                                }
+                                            }
+                                            indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
+                                        }
+
+                                        Connections {
+                                            target: last
+                                            function onLayout() {
+                                                layout()
+                                            }
+                                        }
+
+                                        Component.onCompleted: {
+                                            layout()
+                                        }
+
+                                        property var position: Qt.rect(0,0,0,0)
+                                        property var vertical: position.width == 0
+                                        property var value: 1
+
+                                        visible: position.height != 0
+
+                                        x: position.x-1
+                                        y: vertical ? position.y : (position.y + 7)
+                                        width: vertical ? 10 : (position.width+2)
+                                        height: vertical ? position.height : 10
+                                        opacity: 1.0
+                                        radius: 5
+                                        color: COMMON.accent(0, 0.5, 0.4, value)
+
+                                        Timer {
+                                            running: true
+                                            repeat: true
+                                            interval: 100
+                                            onTriggered: {
+                                                if(index == indicators.count-1 && content.working) {
+                                                    return
+                                                }
+                                                parent.value -= 0.1
+                                                if(parent.value <= 0) {
+                                                    parent.value = 0
+                                                    stop()
+                                                }
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            visible: index == 0
+                                            x: 0
+                                            y: vertical ? 0 : -7
+                                            width: 2
+                                            height: 20
+                                            opacity: 0.8
+                                            color: root.inactive && !content.working ? COMMON.fg3 : COMMON.accent(0.0, 0.7, 0.4)
+                                        }
+                                    }
+                                }
+                            }
+
                             STextArea {
                                 id: textArea
                                 anchors.fill: parent
@@ -337,6 +485,7 @@ Rectangle {
                                     } else {
                                         marker.position = Qt.rect(0,0,0,0)
                                     }
+                                    last.layout()
                                 }
 
                                 property var setCursor: null
@@ -356,8 +505,8 @@ Rectangle {
                                 Connections {
                                     target: modelData
                                     function onInsert(index, text) {
-                                        textArea.insert(index, text + '\u200b')
-                                        textArea.area.remove(index+text.length, index+text.length+1)
+                                        textArea.insert(index, text)
+                                        //textArea.area.remove(index+text.length, index+text.length+1)
                                     }
                                     function onContentChanged() {
                                         if(modelData.content != textArea.text) {
@@ -397,7 +546,8 @@ Rectangle {
                                     width: 2
                                     height: position.height
                                     visible: height != 0
-                                    color: root.inactive ? COMMON.fg2 : COMMON.accent(0, 0.8)
+
+                                    color: root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
 
                                     opacity: markerMouseArea.active || root.inactive ? 0.8 : blink
 
@@ -491,10 +641,14 @@ Rectangle {
             DropGrid {
                 id: dropGrid
                 anchors.fill: parent
-                visible: GUI.tabs.dragging
+                visible: GUI.tabs.draggingTab || GUI.tabs.draggingArea
 
                 onDropped: {
-                    GUI.tabs.dropTab(root.area, position)
+                    if(GUI.tabs.draggingTab) {
+                        GUI.tabs.dropTab(root.area, position)
+                    } else {
+                        GUI.tabs.dropArea(root.area, position)
+                    }
                 }
             }
 

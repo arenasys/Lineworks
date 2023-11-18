@@ -9,6 +9,14 @@ import "../style"
 SMenuBar {
     id: root
 
+    function showPreferences() {
+        return
+    }
+
+    function showUpdate() {
+        return
+    }
+
     SMenu {
         id: menu
         title: "File"
@@ -123,6 +131,25 @@ SMenuBar {
         SMenuSeparator { }
 
         SMenuItem {
+            text: "Update"
+            onPressed: {
+                root.showUpdate()
+            }
+        }
+
+        SMenuItem {
+            text: "Preferences"
+            shortcut: "Ctrl+,"
+            global: true
+            onPressed: {
+                root.showPreferences()
+            }
+        }
+
+
+        SMenuSeparator { }
+
+        SMenuItem {
             text: "Quit"
             shortcut: "Ctrl+Shift+Q"
             global: true
@@ -143,7 +170,7 @@ SMenuBar {
                 if(!GUI.isGenerating) {
                     GUI.generate()
                 }
-            }            
+            }
         }
 
         SMenuItem {
@@ -154,14 +181,194 @@ SMenuBar {
                 if(!GUI.isGenerating) {
                     GUI.regenerate()
                 }
-            }            
+            }
+        }
+
+        SMenuItem {
+            text: "Revert"
+            shortcut: "Ctrl+`"
+            global: true
+            onPressed: {
+                if(!GUI.isGenerating) {
+                    GUI.revert()
+                }
+            }
+        }
+
+        
+        SMenuItem {
+            text: "Abort"
+            shortcut: "Ctrl+Q"
+            global: true
+            onPressed: {
+                if(GUI.isGenerating) {
+                    GUI.abort()
+                }
+            }
+        }
+
+        SMenuSeparator {}
+
+        SMenuItem {
+            text: "Load model"
+            shortcut: "Ctrl+L"
+            global: true
+            onPressed: {
+                if(!GUI.isGenerating) {
+                    GUI.load()
+                }
+            }
+        }
+
+        SMenuItem {
+            text: "Unload model"
+            shortcut: "Ctrl+U"
+            global: true
+            onPressed: {
+                if(!GUI.isGenerating) {
+                    GUI.unload()
+                }
+            }
+        }
+
+        SMenuSeparator {}
+
+        SMenu {
+            title: "Switch to..."
+            
+            SMenuItem {
+                text: "Sentance"
+                shortcut: "Ctrl+1"
+                global: true
+                onPressed: {
+                    GUI.setStopCondition("Sentance")
+                }
+            }
+
+            SMenuItem {
+                text: "Line"
+                shortcut: "Ctrl+2"
+                global: true
+                onPressed: {
+                    GUI.setStopCondition("Line")
+                }
+            }
+
+            SMenuItem {
+                text: "Paragraph"
+                shortcut: "Ctrl+3"
+                global: true
+                onPressed: {
+                    GUI.setStopCondition("Paragraph")
+                }
+            }
+
+            SMenuItem {
+                text: "None"
+                shortcut: "Ctrl+4"
+                global: true
+                onPressed: {
+                    GUI.setStopCondition("None")
+                }
+            }
+        }
+
+        Shortcut {
+            sequences: ["Ctrl+1"]
+            onActivated: GUI.setStopCondition("Sentance")
+        }
+
+        Shortcut {
+            sequences: ["Ctrl+2"]
+            onActivated: GUI.setStopCondition("Line")
+        }
+
+        Shortcut {
+            sequences: ["Ctrl+3"]
+            onActivated: GUI.setStopCondition("Paragraph")
+        }
+
+        Shortcut {
+            sequences: ["Ctrl+4"]
+            onActivated: GUI.setStopCondition("None")
         }
     }
     SMenu {
         title: "View"
+        width: 200
         clipShadow: true
         SMenuItem {
-            text: "None"
+            text: "Next Tab"
+            shortcut: "Alt+Right"
+            global: true
+            onPressed: {
+                GUI.tabs.current.nextTab()
+            }
+        }
+        SMenuItem {
+            text: "Previous Tab"
+            shortcut: "Alt+Left"
+            global: true
+            onPressed: {
+                GUI.tabs.current.prevTab()
+            }
+        }
+
+        Shortcut {
+            sequences: ["Alt+1"]
+            onActivated: GUI.tabs.current.setTab(1)
+        }
+        Shortcut {
+            sequences: ["Alt+2"]
+            onActivated: GUI.tabs.current.setTab(2)
+        }
+        Shortcut {
+            sequences: ["Alt+3"]
+            onActivated: GUI.tabs.current.setTab(3)
+        }
+        Shortcut {
+            sequences: ["Alt+4"]
+            onActivated: GUI.tabs.current.setTab(4)
+        }
+        Shortcut {
+            sequences: ["Alt+5"]
+            onActivated: GUI.tabs.current.setTab(5)
+        }
+        Shortcut {
+            sequences: ["Alt+6"]
+            onActivated: GUI.tabs.current.setTab(6)
+        }
+        Shortcut {
+            sequences: ["Alt+7"]
+            onActivated: GUI.tabs.current.setTab(7)
+        }
+        Shortcut {
+            sequences: ["Alt+8"]
+            onActivated: GUI.tabs.current.setTab(8)
+        }
+        Shortcut {
+            sequences: ["Alt+9"]
+            onActivated: GUI.tabs.current.setTab(9)
+        }
+
+        SMenuSeparator { }
+
+        SMenuItem {
+            text: "Next Area"
+            shortcut: "Alt+Up"
+            global: true
+            onPressed: {
+                GUI.tabs.nextArea()
+            }
+        }
+
+        SMenuItem {
+            text: "Previous Area"
+            shortcut: "Alt+Down"
+            global: true
+            onPressed: {
+                GUI.tabs.prevArea()
+            }
         }
     }
     SMenu {
@@ -170,7 +377,7 @@ SMenuBar {
         SMenuItem {
             text: "About"
             onPressed: {
-                GUI.openLink("https://github.com/arenasys")
+                GUI.openLink("https://github.com/arenasys/lineworks")
             }
         }
     }

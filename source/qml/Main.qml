@@ -27,6 +27,15 @@ FocusReleaser {
         id: windowBar
         anchors.left: root.left
         anchors.right: root.right
+
+        function showPreferences() {
+            preferences.open()
+        }
+
+        function showUpdate() {
+            GUI.update()
+            preferences.open()
+        }
     }
 
     Item {
@@ -39,6 +48,43 @@ FocusReleaser {
         SShadow {
             color: COMMON.bg0
             anchors.fill: parent
+        }
+
+        WorkingLine {
+            id: saveIndicator
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: 1
+            height: 1
+            visible: false
+            advance: 0.05
+
+            Connections {
+                target: GUI
+                function onAutosaving() {
+                    saveIndicator.visible = true
+                    saveIndicatorTimer.start()
+                }
+            }
+            
+            Timer {
+                id: saveIndicatorTimer
+                interval: 300
+                onTriggered: {
+                    parent.visible = false
+                }
+            }
+        }
+
+        Timer {
+            id: autosaveTimer
+            running: GUI.file != ""
+            interval: 1000 * 120
+            repeat: true
+            onTriggered: {
+                GUI.autosave()
+            }
         }
 
         Item {
@@ -99,7 +145,10 @@ FocusReleaser {
                 }
 
                 Repeater {
-                    model: GUI.tabs.areas
+                    model: ArrayModel {
+                        source: GUI.tabs.areas
+                        unique: true
+                    }
                     TabArea {
                         hDivider: horizontalDivider
                         vDivider: verticalDivider
@@ -230,8 +279,6 @@ FocusReleaser {
                             duration: 1000
                             running: parent.visible
                         }
-
-
                     }
 
                     Column {
@@ -257,8 +304,11 @@ FocusReleaser {
                             incValue: 1
                             snapValue: 8
                             bounded: true
+                            disabled: GUI.device == "cpu"
 
-                            override: !active ? (value == "128" ? "Full" : (value == "0" ? "None" : "")) : ""
+                            tooltip: disabled ? "Using CPU only" : ""
+
+                            override: disabled ? "None" : (!active ? (value == "128" ? "Full" : (value == "0" ? "None" : "")) : "")
 
                             bindMap: GUI.modelParameters
                             bindKey: "n_gpu_layers"
@@ -745,7 +795,6 @@ FocusReleaser {
 
                             onPressed: {
                                 if(backendMode.value == "Remote") {
-                                    console.log("HERE")
                                     GUI.restartBackend()
                                 }
                             }
@@ -886,28 +935,21 @@ FocusReleaser {
 
                 ListView {
                     anchors.fill: parent
-                    anchors.topMargin: 28
-                    anchors.margins: 4
+                    anchors.topMargin: 30
+                    anchors.margins: 6
                     id: historyList
                     interactive: false
                     boundsBehavior: Flickable.StopAtBounds                   
                     width: parent.width
                     clip: true
-                    model: Sql {
-                        id: historySql
-                        query: "SELECT rowid, id FROM history ORDER BY id DESC;"
-                    }
-
-                    Connections {
-                        target: GUI
-                        function onHistoryUpdated() {
-                            historySql.reload()
-                        }
+                    model: ArrayModel {
+                        source: GUI.history
+                        unique: true
                     }
 
                     ScrollBar.vertical: SScrollBarV { 
                         id: historyScrollBar
-                        stepSize: 1/(4*Math.ceil(historySql.length))
+                        stepSize: 1/(4*Math.ceil(historyList.model.count))
                         policy: historyList.contentHeight > historyList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                     }
 
@@ -927,7 +969,7 @@ FocusReleaser {
 
                     delegate: Rectangle {
                         id: row
-                        property var entry: GUI.getHistory(sql_id)
+                        property var entry: modelData
                         property var active: preview.locked && preview.target == entry
 
                         color: active ? COMMON.bg2_5 : (entryMouse.containsMouse ? COMMON.bg2 : COMMON.bg1_5)
@@ -957,7 +999,7 @@ FocusReleaser {
                             width: 50
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter
-                            text: sql_rowid
+                            text: historyList.model.count - index
                             pointSize: 9.0
                             color: COMMON.fg1_5
                         }
@@ -1033,7 +1075,7 @@ FocusReleaser {
                                     if(Math.pow(delta.x*delta.x + delta.y*delta.y, 0.5) > 15) {
                                         if(!historyDragCooldown.running) {
                                             preview.locked = false
-                                            GUI.tabs.dragHistory(sql_id)
+                                            GUI.tabs.dragHistory(entry.id)
                                             historyDragCooldown.start()
                                         }
                                     }
@@ -1175,6 +1217,10 @@ FocusReleaser {
                     }
                 }
             }
+        }
+
+        Preferences {
+            id: preferences
         }
 
         SDialog {

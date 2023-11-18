@@ -296,6 +296,7 @@ Item {
                     anchors.fill: parent
                     visible: !valueInput.activeFocus
                     propagateComposedEvents: true
+
                     onPressed: {
                         if(valueInput.text == "-1" && valueInput.text == root.defaultValue) {
                             valueInput.text = ""
@@ -377,6 +378,7 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     preventStealing: true
+
                     onPressed: {
                         root.value = Math.min(root.value + root.incValue, root.maxValue)
                     }
@@ -441,11 +443,29 @@ Item {
         anchors.fill: control
         visible: root.overlay
         color: "#90101010"
+        
+        opacity: COMMON.factor
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        visible: root.disabled
+        hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+        SToolTip {
+            visible: root.tooltip != "" && parent.containsMouse
+            delay: 100
+            text: root.tooltip
+            color: "#f0101010"
+        }
     }
     
     Rectangle {
         anchors.fill: control
         visible: root.disabled
-        color: "#c0101010"
+        
+        opacity: COMMON.factor
+        color: "#60101010"
     }
 }

@@ -15,11 +15,11 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtQml import qmlRegisterUncreatableType
 
-import sql
 import backend
 import misc
 import git
 import tabs
+from tabs import Tab, TabArea
 
 SOURCE_REPO = "https://github.com/arenasys/lineworks"
 DEFAULT_PRESETS = {
@@ -33,6 +33,7 @@ DEFAULT_PRESETS = {
 
 class Update(QThread):
     def run(self):
+        #time.sleep(5)
         git.gitReset(".", SOURCE_REPO)
 
 class HistoryEntry(QObject):
@@ -52,6 +53,10 @@ class HistoryEntry(QObject):
     @pyqtProperty(str, notify=updated)
     def label(self):
         return datetime.fromtimestamp(self._time/1000).strftime("%I:%M %p %b %d")
+    
+    @pyqtProperty(str, notify=updated)
+    def id(self):
+        return str(self._time)
     
     @pyqtProperty(str, notify=updated)
     def content(self):
@@ -84,12 +89,14 @@ class GUI(QObject):
     updated = pyqtSignal()
     workingUpdated = pyqtSignal()
     historyUpdated = pyqtSignal()
+    deviceUpdated = pyqtSignal()
+
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
+    autosaving = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
-        self._db = sql.Database(self)
 
         self._gen_config = copy.deepcopy(DEFAULT_PRESETS)
         gen_default_name = list(self._gen_config.keys())[0]
@@ -115,7 +122,7 @@ class GUI(QObject):
         self._stop_parameters = misc.VariantMap(self, {
             "max_tokens": 128,
             "stop_condition": "None",
-            "stop_conditions": ["None", "Sentance", "Paragraph", "Line"]
+            "stop_conditions": ["Sentance", "Paragraph", "Line", "None"]
         }, strict=True)
 
         self._backend_parameters = misc.VariantMap(self, {
@@ -125,6 +132,8 @@ class GUI(QObject):
             "modes": ["Local", "Remote"]
         }, strict=True)
         self._backend_parameters.updated.connect(self.backendUpdated)
+
+        self._inference_device = "gpu"
 
         self._file = None
         self._recent = []
@@ -140,11 +149,8 @@ class GUI(QObject):
         self._current_model = None
         self._current_tab = None
 
-        self._conn = sql.Connection(self)
-        self._conn.connect()
-        self._conn.doQuery("CREATE TABLE history(id TEXT);")
-        self._conn.enableNotifications("history")
         self._history = {}
+        self._history_order = []
         self._current_entry = None
 
         parent.aboutToQuit.connect(self.stop)
@@ -173,14 +179,18 @@ class GUI(QObject):
             return self._file
         return ""
     
+    @pyqtProperty('QString', notify=deviceUpdated)
+    def device(self):
+        return self._inference_device
+    
     @pyqtProperty(list, notify=updated)
     def recent(self):
         return self._recent
 
     @pyqtProperty(tabs.Tabs, notify=updated)
     def tabs(self):
-        return self._tabs
-
+        return self._tabs   
+    
     @pyqtProperty(misc.VariantMap, notify=updated)
     def generateParameters(self):
         return self._gen_parameters
@@ -270,6 +280,10 @@ class GUI(QObject):
     def stopParameters(self):
         return self._stop_parameters
     
+    @pyqtSlot(str)
+    def setStopCondition(self, stop):
+        self._stop_parameters.set("stop_condition", stop)
+    
     @pyqtProperty(misc.VariantMap, notify=updated)
     def backendParameters(self):
         return self._backend_parameters
@@ -303,26 +317,22 @@ class GUI(QObject):
         self._backend.response.connect(self.onResponse)
         self._backend.start()
 
-    @pyqtSlot(str, result=HistoryEntry)
-    def getHistory(self, id):
-        return self._history[int(id)]
+    @pyqtProperty(list, notify=historyUpdated)
+    def history(self):
+        return [self._history[i] for i in self._history_order[::-1]]
 
     @pyqtSlot(HistoryEntry)
     def addHistory(self, entry):
         id = entry._time
         self._history[id] = entry
-
-        q = QSqlQuery(self._conn.db)
-        q.prepare("INSERT INTO history(id) VALUES (:id);")
-        q.bindValue(":id", str(id))
-        self._conn.doQuery(q)
+        self._history_order += [id]
+        self.historyUpdated.emit()
 
     @pyqtSlot()
     def clearHistory(self):
         self._history = {}
-        q = QSqlQuery(self._conn.db)
-        q.prepare("DELETE FROM history;")
-        self._conn.doQuery(q)
+        self._history_order = []
+        self.historyUpdated.emit()
 
     @pyqtSlot()
     def stop(self):
@@ -494,14 +504,28 @@ class GUI(QObject):
 
     @pyqtSlot()
     def regenerate(self):
-        area = self._tabs.current
-        self._current_tab = area._tabs[area.current]
-        self._current_tab.revert()
+        self.revert()
         self.generate()
+
+    @pyqtSlot()
+    def revert(self):
+        self._tabs.currentTab().revert()
 
     @pyqtSlot()
     def abort(self):
         self._backend.makeRequest({"type":"abort"})
+
+    @pyqtProperty(Tab, notify=workingUpdated)
+    def workingTab(self):
+        if self._current_tab:
+            return self._current_tab
+        return None
+    
+    @pyqtProperty(TabArea, notify=workingUpdated)
+    def workingArea(self):
+        if self._current_tab:
+            return self._current_tab.parent()
+        return None
 
     @pyqtSlot(object)
     def onResponse(self, response):
@@ -509,6 +533,11 @@ class GUI(QObject):
 
         if typ == "status":
             status = response["data"]["message"]
+
+            if status == "disconnected":
+                self._inference_device = "gpu"
+                self.deviceUpdated.emit()
+
             if status in {"connected", "connecting", "disconnected"}:
                 self._remote_status = status
             else:
@@ -525,6 +554,9 @@ class GUI(QObject):
             if not models:
                 self._model_parameters.set("model_path", "")
 
+            self._inference_device = response["data"]["device"]
+            self.deviceUpdated.emit()
+
         if typ == "done":
             if self._status == "loading":
                 self._current_model = self._pending_model
@@ -539,6 +571,7 @@ class GUI(QObject):
                 self._current_model = None
                 self._pending_model = None
 
+            self._current_tab = None
             self._status = "idle"
             self.workingUpdated.emit()
 
@@ -548,15 +581,19 @@ class GUI(QObject):
             self._current_entry._time = int(time.time()*1000)
             self.addHistory(self._current_entry)
             self._current_entry = None
+            self._current_tab = None
+            self.workingUpdated.emit()
 
         if typ == "error":
             self.errored.emit(response["data"]["message"].capitalize(), self._status.capitalize())
             self._status = "idle"
             self._pending_model = None
+            self._current_tab = None
             self.workingUpdated.emit()
         
         if typ == "aborted":
             self._status = "idle"
+            self._current_tab = None
             self.workingUpdated.emit()
 
         if typ == "stream":
@@ -684,6 +721,12 @@ class GUI(QObject):
     def save(self):
         self.doSave(self._file)
 
+    @pyqtSlot()
+    def autosave(self):
+        if self._file:
+            self.autosaving.emit()
+            self.doSave(self._file)
+
     def doOpen(self, file):
         self._file = file
 
@@ -716,7 +759,6 @@ class GUI(QObject):
         self._tabs.clearAreas()
         self._tabs.addDefaultArea()
         self.updated.emit()
-        self.historyUpdated.emit()
     
 def registerTypes():
     qmlRegisterUncreatableType(HistoryEntry, "gui", 1, 0, "HistoryEntry", "Not a QML type")

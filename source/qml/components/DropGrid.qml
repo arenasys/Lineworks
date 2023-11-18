@@ -46,7 +46,7 @@ Item {
         height: root.minorHeight
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        filters: ['application/x-lineworks-position']
+        filters: ['application/x-lineworks-position', 'application/x-lineworks-position-area']
         property var area: "T:L:R:"
 
         Rectangle {
@@ -77,7 +77,7 @@ Item {
         height: root.minorHeight
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        filters: ['application/x-lineworks-position']
+        filters: ['application/x-lineworks-position', 'application/x-lineworks-position-area']
         property var area: "B:L:R:"
 
         Rectangle {
@@ -107,7 +107,7 @@ Item {
         height: root.majorHeight
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        filters: ['application/x-lineworks-position']
+        filters: ['application/x-lineworks-position', 'application/x-lineworks-position-area']
         property var area: "T:B:L:"
 
         Rectangle {
@@ -137,7 +137,7 @@ Item {
         height: root.majorHeight
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
-        filters: ['application/x-lineworks-position']
+        filters: ['application/x-lineworks-position', 'application/x-lineworks-position-area']
         property var area: "T:B:R:"
 
         Rectangle {
@@ -167,7 +167,7 @@ Item {
         height: root.centerHeight
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
-        filters: ['application/x-lineworks-position']
+        filters: ['application/x-lineworks-position', 'application/x-lineworks-position-area']
         property var area: "T:B:L:R:"
 
         onContainsDragChanged: {
