@@ -20,7 +20,7 @@ FocusReleaser {
     Rectangle {
         id: root
         anchors.fill: parent
-        color: COMMON.bg0
+        color: COMMON.light ? COMMON.bg2 : COMMON.bg0
     }
 
     WindowBar {
@@ -43,11 +43,13 @@ FocusReleaser {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: windowBar.bottom
+        anchors.topMargin: 1
         height: Math.max(200, parent.height - windowBar.height)
 
         SShadow {
             color: COMMON.bg0
             anchors.fill: parent
+            anchors.margins: -1
         }
 
         WorkingLine {
@@ -107,8 +109,8 @@ FocusReleaser {
             
             Rectangle {
                 anchors.fill: parent
-                color: COMMON.bg00
-                border.color: COMMON.bg2
+                color: COMMON.light ? COMMON.bg0_5 : COMMON.bg00
+                border.color: COMMON.light ? COMMON.bg4 : COMMON.bg2
                 border.width: 1
             }
 
@@ -189,12 +191,12 @@ FocusReleaser {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: COMMON.bg1
+                        color:  COMMON.light ? COMMON.bg2 : COMMON.bg1
                         border.color: COMMON.bg4
                     }
 
                     Rectangle {
-                        color: COMMON.bg2
+                        color: COMMON.light ? COMMON.bg1_5 : COMMON.bg2
                         border.color: COMMON.bg4
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -396,12 +398,12 @@ FocusReleaser {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: COMMON.bg1
+                        color:  COMMON.light ? COMMON.bg2 : COMMON.bg1
                         border.color: COMMON.bg4
                     }
 
                     Rectangle {
-                        color: COMMON.bg2
+                        color: COMMON.light ? COMMON.bg1_5 : COMMON.bg2
                         border.color: COMMON.bg4
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -603,12 +605,12 @@ FocusReleaser {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: COMMON.bg1
+                        color:  COMMON.light ? COMMON.bg2 : COMMON.bg1
                         border.color: COMMON.bg4
                     }
 
                     Rectangle {
-                        color: COMMON.bg2
+                        color: COMMON.light ? COMMON.bg1_5 : COMMON.bg2
                         border.color: COMMON.bg4
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -729,12 +731,12 @@ FocusReleaser {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: COMMON.bg1
+                        color:  COMMON.light ? COMMON.bg2 : COMMON.bg1
                         border.color: COMMON.bg4
                     }
 
                     Rectangle {
-                        color: COMMON.bg2
+                        color: COMMON.light ? COMMON.bg1_5 : COMMON.bg2
                         border.color: COMMON.bg4
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -887,7 +889,7 @@ FocusReleaser {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: COMMON.bg1
+                    color: COMMON.light ? COMMON.bg2 : COMMON.bg1
                     border.color: COMMON.bg4
                 }
 
@@ -910,7 +912,7 @@ FocusReleaser {
 
                 Rectangle {
                     anchors.fill: historyList
-                    color: COMMON.bg0_5
+                    color: COMMON.light ? COMMON.bg1 : COMMON.bg0_5
                     border.color: COMMON.bg4
                     anchors.margins: -1
                 }

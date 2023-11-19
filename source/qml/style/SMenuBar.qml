@@ -50,7 +50,7 @@ MenuBar {
             anchors.right: parent.right
             anchors.top: parent.top
             height: 1
-            color: COMMON.bg4
+            color: COMMON.light ? COMMON.bg4 : COMMON.bg4
         }
 
         Rectangle {
@@ -59,7 +59,7 @@ MenuBar {
             anchors.bottom: parent.bottom
             anchors.margins: -1
             height: 1
-            color: COMMON.bg4
+            color: COMMON.light ? COMMON.bg4 : COMMON.bg4
         }
     }
 }

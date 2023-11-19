@@ -118,7 +118,7 @@ Item {
         anchors.margins: 2
         anchors.bottomMargin: 0
 
-        color: COMMON.bg2_5
+        color: COMMON.light ? COMMON.bg2 : COMMON.bg2_5
 
         MouseArea {
             id: mouseArea
@@ -434,6 +434,16 @@ Item {
         }
 
         Rectangle {
+            visible: COMMON.light
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: spinnerControls.left
+            anchors.rightMargin: 1
+            width: 1
+            color: COMMON.bg4
+        }
+
+        Rectangle {
             anchors.fill: parent
             color: "transparent"
             border.color: COMMON.bg4
@@ -444,7 +454,7 @@ Item {
         visible: root.overlay
         color: "#90101010"
         
-        opacity: COMMON.factor
+        opacity: COMMON.light ? 0.2 : 1.0
     }
 
     MouseArea {
@@ -465,7 +475,7 @@ Item {
         anchors.fill: control
         visible: root.disabled
         
-        opacity: COMMON.factor
+        opacity: COMMON.light ? 0.2 : 1.0
         color: "#60101010"
     }
 }

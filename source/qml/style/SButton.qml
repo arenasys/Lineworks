@@ -44,7 +44,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             visible: root.disabled
-            opacity: COMMON.factor
+            opacity: COMMON.light ? 0.2 : 1.0
             color: "#a0101010"
         }
     }

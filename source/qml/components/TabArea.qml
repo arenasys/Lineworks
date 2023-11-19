@@ -15,7 +15,7 @@ Rectangle {
     property var vDivider
     clip: true
     anchors.margins: 1
-    color: COMMON.bg00
+    color: COMMON.light ? COMMON.bg0_5 : COMMON.bg00
 
     property var active: GUI.tabs.current == root.area && GUI.tabs.areas.length > 1
     property var inactive: GUI.tabs.current != root.area && GUI.tabs.areas.length > 1
@@ -298,7 +298,7 @@ Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.topMargin: -1
-            color: COMMON.bg0
+            color: COMMON.light ? COMMON.bg1 : COMMON.bg0
             border.color: COMMON.bg4
 
             Item {
@@ -328,7 +328,7 @@ Rectangle {
                     Item {
                         Rectangle {
                             id: content
-                            color: COMMON.bg1
+                            color: COMMON.light ? COMMON.bg00 : COMMON.bg1
                             border.color: COMMON.bg4
                             border.width: 1
                             anchors.centerIn: parent

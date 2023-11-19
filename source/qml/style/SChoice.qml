@@ -291,6 +291,17 @@ Item {
             anchors.margins: 1
             width: 8
             color: COMMON.bg3_5
+
+            Rectangle {
+                visible: COMMON.light
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.right: parent.left
+                width: 1
+                color: COMMON.bg4
+            }
+
+
             Canvas {
                 id: canvas
                 renderStrategy: Canvas.Cooperative
@@ -401,7 +412,7 @@ Item {
         background: Rectangle {
             implicitWidth: 120
             implicitHeight: 30
-            color: COMMON.bg2_5
+            color: COMMON.light ? COMMON.bg2 : COMMON.bg2_5
             border.color: COMMON.bg4
             border.width: 1
         }

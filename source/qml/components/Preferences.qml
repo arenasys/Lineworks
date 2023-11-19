@@ -13,7 +13,7 @@ SDialog {
     modal: true
     
     property alias index: stack.currentIndex
-    property var tabs: ["Program"]
+    property var tabs: ["Program", "Appearance"]
 
     height: 300
     width: 500
@@ -178,6 +178,26 @@ SDialog {
                         Item {
                             width: parent.width
                             height: 25
+                        }
+                    }
+                }
+
+                Item {
+                    Column {
+                        height: parent.height
+                        width: 250
+                        anchors.centerIn: parent
+                        topPadding: 95
+
+                        SChoice {
+                            label: "Color scheme"
+                            model: ["Dark", "Light"]
+                            width: parent.width
+                            height: 25
+
+                            onValueChanged: {
+                                COMMON.light = value == "Light"
+                            }
                         }
                     }
                 }
