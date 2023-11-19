@@ -5,8 +5,6 @@ import datetime
 import traceback
 import re
 
-MODELS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
-
 PARAGRAPH_MATCH = re.compile(r"(.+\n[\s\n]*\n)", flags=re.UNICODE)
 LINE_MATCH = re.compile(r"(.+\n)", flags=re.UNICODE)
 
@@ -46,13 +44,13 @@ def split_sentances(text):
             end = True
             continue
         
-        if a in '.!?…' and (b and b in ' ') and alpha:
+        if a in '.!?…' and ((b and b in ' ') or not b) and alpha:
             sentance += a
             text = text[1:]
             end = True
             continue
 
-        if not a in '\n' and (b and b in '\n'):
+        if not a in '\n' and (b and b in '\n') and alpha:
             sentance += a + b
             text = text[1:]
             end = True
@@ -68,10 +66,11 @@ def split_sentances(text):
     return sentance, sentances
 
 class Inference():
-    def __init__(self, response):
+    def __init__(self, models_path, response):
         self.abort = False
         self.llm = None
         self.model = None
+        self.models_path = models_path
         self.callback = response
 
     def respond(self, response):
@@ -122,7 +121,7 @@ class Inference():
                 try:
                     self.model = req["data"].copy()
                     model_path = req["data"]["model_path"]
-                    req["data"]["model_path"] = os.path.join(MODELS_PATH, f"{model_path}.gguf")
+                    req["data"]["model_path"] = os.path.join(self.models_path, f"{model_path}.gguf")
                     self.llm = Llama(verbose=False, **req["data"])
                 except Exception as e:
                     log_traceback("INFERENCE")
@@ -138,7 +137,7 @@ class Inference():
                 self.setDone()
                 return
             if typ == "options":
-                models = glob.glob(os.path.join(MODELS_PATH, "*.gguf"))
+                models = glob.glob(os.path.join(self.models_path, "*.gguf"))
                 models = [m.rsplit(os.path.sep,1)[-1].rsplit(".",1)[0] for m in models]
                 self.respond({"type":"options", "data": {"models": models, "device": loaded}})
                 return
@@ -157,7 +156,7 @@ class Inference():
                 stop_context = ""
                 if stop == "Sentance":
                     sentance, _ = split_sentances(req["data"]["prompt"])
-                    stop_context = sentance
+                    stop_context = sentance.lstrip()
 
                 output = ""
 

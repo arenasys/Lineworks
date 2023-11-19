@@ -380,8 +380,9 @@ Rectangle {
 
                                             var l = textArea.area.text.length
 
-                                            if(p.x >= l || p.y >= l) {
+                                            if(p.x > l || p.y > l) {
                                                 indicator.position = Qt.rect(0,0,0,0)
+                                                return
                                             }
 
                                             var start = textArea.getPositionRectangle(p.x)
@@ -394,7 +395,8 @@ Rectangle {
                                                     if(start_tmp.y == end_tmp.y) {
                                                         start = start_tmp
                                                     } else {
-                                                        console.log("ERR")
+                                                        indicator.position = Qt.rect(0,0,0,0)
+                                                        return
                                                     }
                                                 } else {
                                                     end = end_tmp
@@ -483,7 +485,7 @@ Rectangle {
                                             marker.position = textArea.getPositionRectangle(modelData.marker)
                                         }
                                     } else {
-                                        marker.position = Qt.rect(0,0,0,0)
+                                        marker.position = textArea.getPositionRectangle(textArea.area.text.length)
                                     }
                                     last.layout()
                                 }
@@ -506,7 +508,6 @@ Rectangle {
                                     target: modelData
                                     function onInsert(index, text) {
                                         textArea.insert(index, text)
-                                        //textArea.area.remove(index+text.length, index+text.length+1)
                                     }
                                     function onContentChanged() {
                                         if(modelData.content != textArea.text) {

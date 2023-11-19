@@ -39,7 +39,7 @@ class Tab(QObject):
         self._name = name
         self._content = "Hello World!"
         self._highlighter = TabHighlighter(self)
-        self._marker = 6
+        self._marker = -1
 
         self._last = ""
         self._history = []
@@ -56,7 +56,12 @@ class Tab(QObject):
     
     @pyqtProperty(str, notify=contentUpdated)
     def initial(self):
-        return self.context() + chr(MARK) + self.trailing()
+        context = self.context()
+        trailing = self.trailing()
+        if trailing:
+            return context + chr(MARK) + trailing
+        else:
+            return context + trailing
     
     @pyqtProperty(str, notify=contentUpdated)
     def content(self):
@@ -68,8 +73,7 @@ class Tab(QObject):
         if mark in text:
             marker = text.index(mark)
         else:
-            marker = min(self.marker, len(text))
-            text = text[:marker] + chr(MARK) + text[marker:]
+            marker = -1
         
         if text != self._content:
             self._content = text
@@ -85,6 +89,9 @@ class Tab(QObject):
     def marker(self):
         return self._marker
     
+    def getMarker(self):
+        return self._marker if self._marker != -1 else len(self._content)
+    
     @marker.setter
     def marker(self, marker):
         if marker != self._marker:
@@ -95,12 +102,13 @@ class Tab(QObject):
     @pyqtSlot(int)
     def moveMarker(self, marker):
         if marker != self._marker:
-            if self._marker < marker:
+            if self._marker >= 0 and self._marker < marker:
                 marker -= 1
 
             text = self._content
             text = text.replace(chr(MARK), '')
-            text = text[:marker] + chr(MARK) + text[marker:]
+            if marker != len(text):
+                text = text[:marker] + chr(MARK) + text[marker:]
             self.content = text
 
     @pyqtSlot(str, result=str)
@@ -118,10 +126,10 @@ class Tab(QObject):
             return []
         
         marker = self.lastStart()
-        if not marker:
+        if marker == None:
             return []
         
-        text = self._content[marker:self._marker+1]
+        text = self._content[marker:self.getMarker()+1]
 
         segments = []
         segment = 0
@@ -145,12 +153,16 @@ class Tab(QObject):
 
         marker = None
 
+        self_marker = self.getMarker()
+
         for i in range(1, len(self._last)+1):
-            a = self._content[self._marker-i]
+            if self_marker - i < 0:
+                break
+            a = self._content[self_marker-i]
             b = self._last[-i]
             if a != b:
                 break
-            marker = self._marker-i
+            marker = self_marker-i
         
         return marker
 
@@ -165,20 +177,26 @@ class Tab(QObject):
         else:
             self._last = ""
         
-        if marker:
-            text = self._content[:marker] + chr(MARK) + self._content[self._marker+1:]
+        if marker != None:
+            text = self._content[:marker]
+            if self._marker != -1:
+                text += chr(MARK) + self._content[self._marker+1:]
             self.content = text
     
     def startStream(self):
         if self._last:
             self._history += [self._last]
         self._last = ""
+
+    def endStream(self):
+        if not self._last and self._history:
+            self._last = self._history.pop()
     
     @pyqtSlot(str)
     def stream(self, text):
         text = clean_text(text)
         self._last += text
-        self.insert.emit(self._marker, text)
+        self.insert.emit(self.getMarker(), text)
 
     @pyqtSlot(result=str)
     def context(self):
@@ -404,7 +422,12 @@ class Tabs(QObject):
         sourceArea = [a for a in self._areas if tab in a._tabs]
         sourceArea = sourceArea[0] if sourceArea else None
         if sourceArea:
-            sourceArea.removeTab(tab)
+            if len(sourceArea._tabs) == 1:
+                self._areas.remove(sourceArea)
+                self.expandAreas()
+                self.areasUpdated.emit()
+            else:
+                sourceArea.removeTab(tab)
 
     @pyqtSlot(Tab, str)
     def saveTab(self, tab, file):
@@ -472,6 +495,7 @@ class Tabs(QObject):
         targetArea = area
 
         onlyTab = len(sourceArea._tabs) == 1 if sourceArea else False
+
         if sourceArea == targetArea and onlyTab:
             return
         if onlyTab:

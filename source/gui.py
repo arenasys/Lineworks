@@ -573,29 +573,42 @@ class GUI(QObject):
                 self._current_model = None
                 self._pending_model = None
 
-            self._current_tab = None
+            #self._current_tab = None
             self._status = "idle"
             self.workingUpdated.emit()
 
         if typ == "output":
             output = ''.join([c for c in response["data"]["output"] if ord(c) < 0x10000])
-            self._current_entry._output = output
-            self._current_entry._time = int(time.time()*1000)
-            self.addHistory(self._current_entry)
+            if output:
+                self._current_entry._output = output
+                self._current_entry._time = int(time.time()*1000)
+                self.addHistory(self._current_entry)
+            
             self._current_entry = None
-            self._current_tab = None
+
+            if self._current_tab:
+                self._current_tab.endStream()
+                self._current_tab = None
+
             self.workingUpdated.emit()
 
         if typ == "error":
             self.errored.emit(response["data"]["message"].capitalize(), self._status.capitalize())
             self._status = "idle"
             self._pending_model = None
-            self._current_tab = None
+
+            if self._current_tab:
+                self._current_tab.endStream()
+                self._current_tab = None
+
             self.workingUpdated.emit()
         
         if typ == "aborted":
             self._status = "idle"
+
+            self._current_tab.endStream()
             self._current_tab = None
+
             self.workingUpdated.emit()
 
         if typ == "stream":
