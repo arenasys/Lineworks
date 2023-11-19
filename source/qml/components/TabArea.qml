@@ -371,6 +371,7 @@ Rectangle {
                                     model: ArrayModel {
                                         id: indicators
                                         source: modelData.last
+                                        unique: true
                                     }
                                     
                                     Rectangle {
@@ -403,6 +404,7 @@ Rectangle {
                                                 }
                                             }
                                             indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
+                                            //console.log(textArea.area.text.slice(p.x, p.y), indicator.position)
                                         }
 
                                         Connections {
@@ -433,7 +435,7 @@ Rectangle {
                                         Timer {
                                             running: true
                                             repeat: true
-                                            interval: 100
+                                            interval: 50
                                             onTriggered: {
                                                 if(index == indicators.count-1 && content.working) {
                                                     return
@@ -441,7 +443,6 @@ Rectangle {
                                                 parent.value -= 0.1
                                                 if(parent.value <= 0) {
                                                     parent.value = 0
-                                                    stop()
                                                 }
                                             }
                                         }

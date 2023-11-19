@@ -52,6 +52,11 @@ class HistoryEntry(QObject):
 
     @pyqtProperty(str, notify=updated)
     def label(self):
+        t = self._output.replace('\n','').strip()
+        t = t if len(t) < 50 else t[:50]
+
+        return t
+
         return datetime.fromtimestamp(self._time/1000).strftime("%I:%M %p %b %d")
     
     @pyqtProperty(str, notify=updated)
@@ -565,7 +570,7 @@ class GUI(QObject):
 
         if typ == "output":
             output = ''.join([c for c in response["data"]["output"] if ord(c) < 0x10000])
-            if output:
+            if output.strip():
                 self._current_entry._output = output
                 self._current_entry._time = int(time.time()*1000)
                 self.addHistory(self._current_entry)
@@ -592,8 +597,9 @@ class GUI(QObject):
         if typ == "aborted":
             self._status = "idle"
 
-            self._current_tab.endStream()
-            self._current_tab = None
+            if self._current_tab:
+                self._current_tab.endStream()
+                self._current_tab = None
 
             self.workingUpdated.emit()
 

@@ -974,7 +974,7 @@ FocusReleaser {
 
                         color: active ? COMMON.bg2_5 : (entryMouse.containsMouse ? COMMON.bg2 : COMMON.bg1_5)
                         height: 20
-                        width: parent != null ? parent.width : 20
+                        width: parent != null ? parent.width - (historyList.contentHeight > historyList.height ? 11 : 0)  : 20
 
                         function activate() {
                             preview.target = entry
@@ -991,17 +991,24 @@ FocusReleaser {
                         onYChanged: {
                             sync()
                         }
+
+                        Rectangle {
+                            anchors.fill: indexLabel
+                            color: COMMON.bg2_5
+                        }
+
                     
                         SText {
                             id: indexLabel
                             anchors.left: parent.left
                             height: parent.height
-                            width: 50
+                            width: 2+Math.floor(Math.log10(GUI.history.length)+1)*9
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter
                             text: historyList.model.count - index
                             pointSize: 9.0
-                            color: COMMON.fg1_5
+                            color: COMMON.fg2
+
                         }
 
                         Rectangle {
@@ -1018,11 +1025,15 @@ FocusReleaser {
                             anchors.leftMargin: 1
                             anchors.right: parent.right
                             height: parent.height
+                            leftPadding: 3
+                            rightPadding: 1
                             verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
+                            horizontalAlignment: Text.AlignLeft
                             text: entry.label
                             pointSize: 9.0
-                            color: COMMON.fg2
+                            color: COMMON.fg1_5
+                            elide: Text.ElideRight
+                            textFormat: Text.PlainText
                         }
 
                         Rectangle {
@@ -1030,6 +1041,15 @@ FocusReleaser {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             height: 1
+                            color: COMMON.bg4
+                        }
+
+                        Rectangle {
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            width: 1
+                            anchors.rightMargin: -1
                             color: COMMON.bg4
                         }
 

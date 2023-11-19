@@ -138,8 +138,7 @@ class Tab(QObject):
                 if segment != None:
                     segments += [QPoint(marker+segment, marker+i)]
                     segment = None
-                
-                if i != len(text) and text[i] == '\n' and (i == 0 or text[i-1] == '\n'):
+                elif i != len(text) and text[i] == '\n' and (i == 0 or text[i-1] == '\n'):
                     segments += [QPoint(marker+i, marker+i)]
                 continue
             if segment == None:
