@@ -89,7 +89,6 @@ class GUI(QObject):
     updated = pyqtSignal()
     workingUpdated = pyqtSignal()
     historyUpdated = pyqtSignal()
-    deviceUpdated = pyqtSignal()
 
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
@@ -132,8 +131,6 @@ class GUI(QObject):
             "modes": ["Local", "Remote"]
         }, strict=True)
         self._backend_parameters.updated.connect(self.backendUpdated)
-
-        self._inference_device = "gpu"
 
         self._file = None
         self._recent = []
@@ -178,10 +175,6 @@ class GUI(QObject):
         if self._file:
             return self._file
         return ""
-    
-    @pyqtProperty('QString', notify=deviceUpdated)
-    def device(self):
-        return self._inference_device
     
     @pyqtProperty(list, notify=updated)
     def recent(self):
@@ -536,10 +529,6 @@ class GUI(QObject):
         if typ == "status":
             status = response["data"]["message"]
 
-            if status == "disconnected":
-                self._inference_device = "gpu"
-                self.deviceUpdated.emit()
-
             if status in {"connected", "connecting", "disconnected"}:
                 self._remote_status = status
             else:
@@ -555,9 +544,6 @@ class GUI(QObject):
                 self._model_parameters.set("model_path", models[0])
             if not models:
                 self._model_parameters.set("model_path", "")
-
-            self._inference_device = response["data"]["device"]
-            self.deviceUpdated.emit()
 
         if typ == "done":
             if self._status == "loading":

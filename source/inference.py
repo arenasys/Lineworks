@@ -93,15 +93,15 @@ class Inference():
         self.abort = True
 
     def process(self, request):
-        loaded = ""
+        loaded = False
         try:
             from llama_cpp_cuda import Llama
-            loaded = "gpu"
+            loaded = True
         except:
             pass
         try:
             from llama_cpp import Llama
-            loaded = "cpu"
+            loaded = True
         except:
             pass
 
@@ -139,7 +139,7 @@ class Inference():
             if typ == "options":
                 models = glob.glob(os.path.join(self.models_path, "*.gguf"))
                 models = [m.rsplit(os.path.sep,1)[-1].rsplit(".",1)[0] for m in models]
-                self.respond({"type":"options", "data": {"models": models, "device": loaded}})
+                self.respond({"type":"options", "data": {"models": models}})
                 return
             if typ == "generate":
                 if not self.llm:
