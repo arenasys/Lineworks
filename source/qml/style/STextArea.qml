@@ -75,7 +75,8 @@ Rectangle {
             hoverColor: COMMON.bg4
             pressedColor: COMMON.bg5
             policy: control.height >= control.contentHeight ? ScrollBar.AlwaysOff : ScrollBar.AlwaysOn
-            stepSize: 1/Math.ceil((textArea.contentHeight+textArea.bottomPadding)/(textArea.font.pixelSize*2))
+            property var line: 1/Math.ceil((textArea.contentHeight+textArea.bottomPadding)/(textArea.font.pixelSize*2))
+            stepSize: line
         }
 
         onContentHeightChanged: {
@@ -152,12 +153,20 @@ Rectangle {
                     contextMenu.popup()
                 }
             }
+            property var bar: controlScrollBar
             onWheel: {
-                if(wheel.angleDelta.y < 0) {
-                    scrollBar.increase()
-                } else {
-                    scrollBar.decrease()
+                var d = wheel.angleDelta.y
+                var p = Math.abs(d)/120
+                if(p == 0) {
+                    return
                 }
+                bar.stepSize = bar.line * p
+                if(d < 0) {
+                    bar.increase()
+                } else {
+                    bar.decrease()
+                }
+                bar.stepSize = bar.line
             }
         }
 

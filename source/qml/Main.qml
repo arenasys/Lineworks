@@ -983,19 +983,28 @@ FocusReleaser {
                         color: COMMON.bg3
                         hoverColor: COMMON.bg4
                         pressedColor: COMMON.bg5
-                        stepSize: 1/(Math.ceil(historyList.model.count))
                         policy: historyList.contentHeight > historyList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        property var line: 1/(Math.ceil(historyList.model.count))
+                        stepSize: line
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.NoButton
+                        property var bar: historyScrollBar
                         onWheel: {
-                            if(wheel.angleDelta.y < 0) {
-                                historyScrollBar.increase()
-                            } else {
-                                historyScrollBar.decrease()
+                            var d = wheel.angleDelta.y
+                            var p = Math.abs(d)/120
+                            if(p == 0) {
+                                return
                             }
+                            bar.stepSize = bar.line * p
+                            if(d < 0) {
+                                bar.increase()
+                            } else {
+                                bar.decrease()
+                            }
+                            bar.stepSize = bar.line
                         }
                     }
 
