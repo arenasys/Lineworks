@@ -33,6 +33,7 @@ class Tab(QObject):
     markerUpdated = pyqtSignal()
     lastUpdated = pyqtSignal()
     insert = pyqtSignal(int, str)
+    remove = pyqtSignal(int, int)
     def __init__(self, parent, name):
         super().__init__(parent)
         self.gui = parent.gui
@@ -177,7 +178,11 @@ class Tab(QObject):
             self._last = ""
         
         if marker != None:
-            text = self._content[:marker]
+            start = marker
+            end = self.getMarker()
+            self.remove.emit(start, end)
+
+            text = self._content[:start]
             if self._marker != -1:
                 text += chr(MARK) + self._content[self._marker+1:]
             self.content = text

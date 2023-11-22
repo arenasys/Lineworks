@@ -9,8 +9,9 @@ ScrollBar {
     position: 0.2
     active: true
     orientation: Qt.Vertical
-    property var color: COMMON.bg7
-    property var pressedColor: COMMON.fg3
+    property var color: COMMON.bg5
+    property var hoverColor: COMMON.bg5
+    property var pressedColor: COMMON.bg7
     property var barWidth: 6
     property var barHeight: 200
 
@@ -20,10 +21,11 @@ ScrollBar {
         color: "transparent"
 
         Rectangle {
+            id: indicator
             height: parent.height
             width: control.barWidth
             anchors.right: parent.right
-            color: control.pressed ? control.pressedColor : control.color
+            color: control.pressed ? control.pressedColor : (control.hovered ? control.hoverColor : control.color)
             opacity: control.policy === ScrollBar.AlwaysOn || (control.active && control.size < 1.0) ? 0.75 : 0
         }
     }

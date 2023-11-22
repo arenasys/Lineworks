@@ -951,7 +951,13 @@ FocusReleaser {
 
                     ScrollBar.vertical: SScrollBarV { 
                         id: historyScrollBar
-                        stepSize: 1/(4*Math.ceil(historyList.model.count))
+                        anchors.right: historyList.right
+                        anchors.rightMargin: -2
+                        barWidth: 5
+                        color: COMMON.bg3
+                        hoverColor: COMMON.bg4
+                        pressedColor: COMMON.bg5
+                        stepSize: 1/(Math.ceil(historyList.model.count))
                         policy: historyList.contentHeight > historyList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
                     }
 
@@ -976,7 +982,7 @@ FocusReleaser {
 
                         color: active ? COMMON.bg2_5 : (entryMouse.containsMouse ? COMMON.bg2 : COMMON.bg1_5)
                         height: 20
-                        width: parent != null ? parent.width - (historyList.contentHeight > historyList.height ? 11 : 0)  : 20
+                        width: parent != null ? parent.width - (historyList.contentHeight > historyList.height ? 6 : 0)  : 20
 
                         function activate() {
                             preview.target = entry
@@ -1154,6 +1160,7 @@ FocusReleaser {
             }
 
             Rectangle {
+                id: previewBg
                 visible: preview.visible
                 anchors.fill: preview
                 anchors.margins: -1
@@ -1163,17 +1170,6 @@ FocusReleaser {
                     anchors.fill: parent
                     anchors.margins: 1
                     color: COMMON.bg1
-                    border.color: COMMON.bg4
-                    opacity: preview.locked ? 1.0 : 0.8
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: 1
-                    visible: preview.locked
-                    color: "transparent"
-                    opacity: 0.3
-                    border.color: COMMON.accent(0)
                 }
             }
 
@@ -1216,7 +1212,7 @@ FocusReleaser {
 
                 onTargetChanged: {
                     if(preview.target) {
-                        preview.text = preview.target.content
+                        preview.text = preview.target.context + preview.target.output
                     }
                 }
 
@@ -1238,6 +1234,24 @@ FocusReleaser {
                         previewClear.start()
                     }
                 }
+            }
+
+            Rectangle {
+                visible: preview.visible
+                anchors.fill: previewBg
+                anchors.margins: 1
+                color: "transparent"
+                border.color: COMMON.bg4
+                opacity: preview.locked ? 1.0 : 0.8
+            }
+
+            Rectangle {
+                anchors.fill: previewBg
+                anchors.margins: 1
+                visible: preview.visible && preview.locked
+                color: "transparent"
+                opacity: 0.3
+                border.color: COMMON.accent(0)
             }
         }
 

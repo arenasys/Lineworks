@@ -54,22 +54,35 @@ class HistoryEntry(QObject):
     def label(self):
         t = self._output.replace('\n','').strip()
         t = t if len(t) < 50 else t[:50]
-
         return t
-
-        return datetime.fromtimestamp(self._time/1000).strftime("%I:%M %p %b %d")
     
     @pyqtProperty(str, notify=updated)
     def id(self):
         return str(self._time)
     
     @pyqtProperty(str, notify=updated)
-    def content(self):
+    def context(self):
         a = self._context.replace("\n", "<br>")
-        b = self._output.rstrip().replace("\n", "<br>")
+        if len(a) > 40:
+            a = a[-40:]
+            
+            i = 0
+            try:
+                i = a.index(' ')
+            except:
+                pass
+            
+            if i and i < 20:
+                a = a[i+1:]
 
-        return f'<span style=\'color: "#808080";\'>{a}</span>{b}'
+            a = "... " + a
+        return f'<span style=\'color: "#808080";\'>{a}</span>'
     
+    @pyqtProperty(str, notify=updated)
+    def output(self):
+        b = self._output.rstrip().replace("\n", "<br>")
+        return b
+
     def toJSON(self):
         data = {
             "context": self._context,

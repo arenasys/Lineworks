@@ -179,12 +179,6 @@ Rectangle {
                         }
                     }
 
-                    /*Rectangle {
-                        color: "black"
-                        opacity: current ? (root.inactive ? 0.2 : 0.0) : 0.35
-                        anchors.fill: parent
-                    }*/
-
                     MouseArea {
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -300,6 +294,7 @@ Rectangle {
             anchors.topMargin: -1
             color: COMMON.light ? COMMON.bg1 : COMMON.bg0
             border.color: COMMON.bg4
+            clip: true
 
             Item {
                 anchors.fill: parent
@@ -315,325 +310,342 @@ Rectangle {
                     color: "black"
                     cornerRadius: 10
                 }
-            }
 
-            StackLayout {
-                anchors.fill: parent
-                currentIndex: root.area.current
-                Repeater {
-                    model: ArrayModel {
-                        source: root.area != undefined ? root.area.tabs : []
-                        unique: true
-                    }
-                    Item {
-                        Rectangle {
-                            id: content
-                            color: COMMON.light ? COMMON.bg00 : COMMON.bg1
-                            border.color: COMMON.bg4
-                            border.width: 1
-                            anchors.centerIn: parent
-                            width: Math.min(600, parent.width)
-                            height: parent.height
-                            anchors.margins: 10
-                            anchors.leftMargin: 0
-                            anchors.rightMargin: 0
-                            clip: true
+                StackLayout {
+                    anchors.fill: parent
+                    anchors.topMargin: -1
+                    anchors.bottomMargin: -1
+                    currentIndex: root.area.current
+                    Repeater {
+                        model: ArrayModel {
+                            source: root.area != undefined ? root.area.tabs : []
+                            unique: true
+                        }
+                        Item {
+                            Rectangle {
+                                id: content
+                                color: COMMON.light ? COMMON.bg00 : COMMON.bg1
+                                border.color: COMMON.bg4
+                                border.width: 1
+                                anchors.centerIn: parent
+                                width: Math.min(600, parent.width+2)
+                                height: parent.height
+                                anchors.margins: 10
+                                anchors.leftMargin: 0
+                                anchors.rightMargin: 0
 
-                            property var working: modelData == GUI.workingTab
+                                property var working: modelData == GUI.workingTab
 
-                            function focus() {
-                                textArea.forceActiveFocus()
-                            }
-
-                            Connections {
-                                target: root.area
-                                function onCurrentChanged() {
-                                    if(root.area.current == index) {
-                                        content.focus()
-                                    }
+                                function focus() {
+                                    textArea.forceActiveFocus()
                                 }
-                            }
 
-                            Connections {
-                                target: GUI.tabs
-                                function onCurrentChanged() {
-                                    if(root.area == GUI.tabs.current && root.area.current == index) {
-                                        content.focus()
-                                    }
-                                }
-                            }
-
-                            Item {
-                                id: last
-                                signal layout()
-
-                                Repeater {
-                                    model: ArrayModel {
-                                        id: indicators
-                                        source: modelData.last
-                                        unique: true
-                                    }
-                                    
-                                    Rectangle {
-                                        id: indicator
-                                        function layout() {
-                                            var p = modelData
-
-                                            var l = textArea.area.text.length
-
-                                            if(p.x > l || p.y > l) {
-                                                indicator.position = Qt.rect(0,0,0,0)
-                                                return
-                                            }
-
-                                            var start = textArea.getPositionRectangle(p.x)
-                                            var end = textArea.getPositionRectangle(p.y)
-
-                                            if(start.y != end.y) {
-                                                var end_tmp = textArea.getPositionRectangle(p.y-1)
-                                                if(start.y != end_tmp.y) {
-                                                    var start_tmp = textArea.getPositionRectangle(p.x+1)
-                                                    if(start_tmp.y == end_tmp.y) {
-                                                        start = start_tmp
-                                                    } else {
-                                                        indicator.position = Qt.rect(0,0,0,0)
-                                                        return
-                                                    }
-                                                } else {
-                                                    end = end_tmp
-                                                }
-                                            }
-                                            indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
-                                            //console.log(textArea.area.text.slice(p.x, p.y), indicator.position)
+                                Connections {
+                                    target: root.area
+                                    function onCurrentChanged() {
+                                        if(root.area.current == index) {
+                                            content.focus()
                                         }
-
-                                        Connections {
-                                            target: last
-                                            function onLayout() {
-                                                layout()
-                                            }
-                                        }
-
-                                        Component.onCompleted: {
-                                            layout()
-                                        }
-
-                                        property var position: Qt.rect(0,0,0,0)
-                                        property var vertical: position.width == 0
-                                        property var value: 1
-
-                                        visible: position.height != 0
-
-                                        x: position.x-1
-                                        y: vertical ? position.y : (position.y + 7)
-                                        width: vertical ? 10 : (position.width+2)
-                                        height: vertical ? position.height : 10
-                                        opacity: 1.0
-                                        radius: 5
-                                        color: COMMON.accent(0, 0.5, 0.4, value)
-
-                                        Timer {
-                                            running: true
-                                            repeat: true
-                                            interval: 50
-                                            onTriggered: {
-                                                if(index == indicators.count-1 && content.working) {
-                                                    return
-                                                }
-                                                parent.value -= 0.1
-                                                if(parent.value <= 0) {
-                                                    parent.value = 0
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            visible: index == 0
-                                            x: 0
-                                            y: vertical ? 0 : -7
-                                            width: 2
-                                            height: 20
-                                            opacity: 0.8
-                                            color: root.inactive && !content.working ? COMMON.fg3 : COMMON.accent(0.0, 0.7, 0.4)
-                                        }
-                                    }
-                                }
-                            }
-
-                            STextArea {
-                                id: textArea
-                                anchors.fill: parent
-                                area.padding: 10
-                                area.leftPadding: 12
-                                area.rightPadding: 12
-                                area.selectionColor: root.inactive ? COMMON.accent(0, 0.0, 0.4) : COMMON.accent(0, 0.7, 0.7)
-
-                                function clean(text) {
-                                    return modelData.clean(text)
-                                }
-
-                                function insert(index, text) {
-                                    var lock = control.atYEnd
-                                    area.insert(index, text)
-                                    if(lock && control.contentHeight > control.height) {
-                                        control.contentY = control.contentHeight-control.height
-                                    }
-                                }
-
-                                function layout() {
-                                    if(modelData.marker != -1) {
-                                        if(area.length >= modelData.marker) {
-                                            marker.position = textArea.getPositionRectangle(modelData.marker)
-                                        }
-                                    } else {
-                                        marker.position = textArea.getPositionRectangle(textArea.area.text.length)
-                                    }
-                                    last.layout()
-                                }
-
-                                property var setCursor: null
-
-                                onTextChanged: {
-                                    modelData.content = area.text
-                                    layout()
-                                }
-
-                                area.onTextChanged: {
-                                    if(textArea.setCursor != null) {
-                                        textArea.area.cursorPosition = textArea.setCursor
-                                        textArea.setCursor = null
                                     }
                                 }
 
                                 Connections {
-                                    target: modelData
-                                    function onInsert(index, text) {
-                                        textArea.insert(index, text)
-                                    }
-                                    function onContentChanged() {
-                                        if(modelData.content != textArea.text) {
-                                            textArea.setCursor = textArea.area.cursorPosition
-                                            textArea.text = modelData.content
+                                    target: GUI.tabs
+                                    function onCurrentChanged() {
+                                        if(root.area == GUI.tabs.current && root.area.current == index) {
+                                            content.focus()
                                         }
                                     }
                                 }
 
-                                Component.onCompleted: {
-                                    modelData.setHighlighting(area.textDocument)
-                                    textArea.insert(0, modelData.initial)
+                                Item {
+                                    id: last
+                                    signal layout()
+
+                                    Repeater {
+                                        model: ArrayModel {
+                                            id: indicators
+                                            source: modelData.last
+                                        }
+                                        
+                                        Rectangle {
+                                            id: indicator
+                                            function layout() {
+                                                if(value == 0 && index != 0) {
+                                                    return
+                                                }
+
+                                                var p = modelData
+                                                var l = textArea.area.text.length
+
+                                                if(p.x > l || p.y > l) {
+                                                    indicator.position = Qt.rect(0,0,0,0)
+                                                    return
+                                                }
+
+                                                var start = textArea.getPositionRectangle(p.x)
+                                                var end = textArea.getPositionRectangle(p.y)
+
+                                                if(start.y != end.y) {
+                                                    var end_tmp = textArea.getPositionRectangle(p.y-1)
+                                                    if(start.y != end_tmp.y) {
+                                                        var start_tmp = textArea.getPositionRectangle(p.x+1)
+                                                        if(start_tmp.y == end_tmp.y) {
+                                                            start = start_tmp
+                                                        } else {
+                                                            indicator.position = Qt.rect(0,0,0,0)
+                                                            return
+                                                        }
+                                                    } else {
+                                                        end = end_tmp
+                                                    }
+                                                }
+                                                indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
+                                                //console.log(textArea.area.text.slice(p.x, p.y), indicator.position)
+                                            }
+
+                                            Connections {
+                                                target: last
+                                                function onLayout() {
+                                                    layout()
+                                                }
+                                            }
+
+                                            Component.onCompleted: {
+                                                layout()
+                                            }
+
+                                            property var position: Qt.rect(0,0,0,0)
+                                            property var vertical: position.width == 0
+                                            property var value: 1
+
+                                            visible: position.height != 0
+
+                                            x: position.x-1
+                                            y: vertical ? position.y : (position.y + 7)
+                                            width: vertical ? 10 : (position.width+2)
+                                            height: vertical ? position.height : 10
+                                            radius: 5
+                                            color: COMMON.accent(0, 0.5, 0.4, value)
+
+                                            Timer {
+                                                running: true
+                                                repeat: true
+                                                interval: 50
+                                                onTriggered: {
+                                                    if(index == indicators.count-1 && content.working) {
+                                                        return
+                                                    }
+                                                    parent.value -= 0.1
+                                                    if(parent.value <= 0) {
+                                                        parent.value = 0
+                                                    }
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                visible: index == 0
+                                                x: 0
+                                                y: vertical ? 0 : -7
+                                                width: 2
+                                                height: 20
+                                                opacity: 0.8
+                                                color: root.inactive && !content.working ? COMMON.fg3 : COMMON.accent(0.0, 0.7, 0.4)
+                                            }
+                                        }
+                                    }
                                 }
 
-                                MouseArea {
-                                    id: textMouseArea
+                                TabTextArea {
+                                    id: textArea
                                     anchors.fill: parent
+                                    area.padding: 10
+                                    area.leftPadding: 12
+                                    area.rightPadding: 12
+                                    area.selectionColor: root.inactive ? COMMON.accent(0, 0.0, 0.4) : COMMON.accent(0, 0.7, 0.7)
 
-                                    onPressed: {
-                                        if ((mouse.button == Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier)) {
-                                            var position = textArea.area.mapFromItem(textMouseArea, Qt.point(mouse.x, mouse.y))
-                                            var p = textArea.area.positionAt(position.x, position.y)
-                                            if(p != modelData.marker) {
-                                                modelData.moveMarker(p)
+                                    function clean(text) {
+                                        return modelData.clean(text)
+                                    }
+
+                                    function insert(index, text) {
+                                        area.insert(index, text)
+                                        textArea.ensureVisible(index+text.length)
+                                    }
+
+                                    function layout() {
+                                        if(modelData.marker != -1) {
+                                            if(area.length >= modelData.marker) {
+                                                marker.position = textArea.getPositionRectangle(modelData.marker)
                                             }
                                         } else {
-                                            mouse.accepted = false
+                                            marker.position = textArea.getPositionRectangle(textArea.area.text.length)
+                                        }
+                                        last.layout()
+                                    }
+
+                                    property var setCursor: null
+
+                                    onTextChanged: {
+                                        modelData.content = area.text
+                                        layout()
+                                    }
+
+                                    area.onTextChanged: {
+                                        if(textArea.setCursor != null) {
+                                            if(textArea.area.text.length < textArea.setCursor) {
+                                                textArea.area.cursorPosition = textArea.area.text.length
+                                            } else {
+                                                textArea.area.cursorPosition = textArea.setCursor
+                                            }
+                                            textArea.setCursor = null
+                                        }
+                                    }
+
+                                    Connections {
+                                        target: modelData
+
+                                        function onRemove(start, end) {
+                                            var c = textArea.area.cursorPosition
+                                            if(c > start) {
+                                                if(c < end) {
+                                                    textArea.setCursor = start
+                                                } else {
+                                                    textArea.setCursor = c - (end-start)
+                                                }
+                                            } else {
+                                                textArea.setCursor = c
+                                            }
+                                        }
+
+                                        function onInsert(index, text) {
+                                            textArea.insert(index, text)
+                                        }
+
+                                        function onContentChanged() {
+                                            if(modelData.content != textArea.text) {
+                                                textArea.text = modelData.content
+                                            }
+                                        }
+                                    }
+
+                                    Component.onCompleted: {
+                                        modelData.setHighlighting(area.textDocument)
+                                        textArea.insert(0, modelData.initial)
+                                    }
+
+                                    MouseArea {
+                                        id: textMouseArea
+                                        anchors.fill: parent
+
+                                        onPressed: {
+                                            if ((mouse.button == Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier)) {
+                                                var position = textArea.area.mapFromItem(textMouseArea, Qt.point(mouse.x, mouse.y))
+                                                var p = textArea.area.positionAt(position.x, position.y)
+                                                if(p != modelData.marker) {
+                                                    modelData.moveMarker(p)
+                                                }
+                                            } else {
+                                                mouse.accepted = false
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: marker
+                                        property var position: Qt.rect(0,0,0,0)
+                                        x: position.x-1
+                                        y: position.y
+                                        width: 2
+                                        height: position.height
+                                        visible: height != 0
+
+                                        color: root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
+
+                                        opacity: markerMouseArea.active || root.inactive ? 0.8 : blink
+
+                                        MouseArea {
+                                            id: markerMouseArea
+                                            anchors.fill: parent
+                                            anchors.leftMargin: -5
+                                            anchors.rightMargin: -5
+                                            hoverEnabled: true
+
+                                            property var active: containsMouse || dragging
+                                            property var dragging: false
+                                            property var startPosition: Qt.point(0,0)
+                                            property var markerStartPosition: Qt.point(0,0)
+
+                                            onPressed: {
+                                                startPosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
+                                                markerStartPosition = textArea.area.mapFromItem(textArea, Qt.point(marker.position.x, marker.position.y))
+                                            }
+
+                                            onReleased: {
+                                                dragging = false
+                                            }
+
+                                            Timer {
+                                                id: cooldown
+                                                interval: 10
+                                            }
+
+                                            onPositionChanged: {
+                                                var mousePosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
+                                                if(pressedButtons & Qt.LeftButton) {
+                                                    var delta = Qt.point(mousePosition.x-startPosition.x, mousePosition.y-startPosition.y)
+                                                    if(!dragging) {
+                                                        if(Math.pow(delta.x*delta.x + delta.y*delta.y, 0.5) > 5) {
+                                                            dragging = true
+                                                        }
+                                                    } else {
+                                                        if(!cooldown.running) {
+                                                            var boxPosition = textArea.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
+                                                            if(boxPosition.y < 0) {
+                                                                textArea.scrollBar.decrease()
+                                                                cooldown.start()
+                                                            } else if (boxPosition.y > textArea.height) {
+                                                                textArea.scrollBar.increase()
+                                                                cooldown.start()
+                                                            }
+                                                        }
+
+                                                        var x = Math.floor(markerStartPosition.x + delta.x)
+                                                        var dy = Math.floor(delta.y/marker.height) * marker.height
+                                                        var y = Math.floor(markerStartPosition.y + dy + marker.height/2)
+                                                        var p = textArea.area.positionAt(x, y)
+
+                                                        if(p != modelData.marker) {
+                                                            modelData.moveMarker(p)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        property var blink: 0.8
+
+                                        NumberAnimation on blink {
+                                            id: animation;
+                                            from: 1.0
+                                            to: 0.2
+                                            duration: GUI.isGenerating ? 500 : 1000
+                                            loops: Animation.Infinite
+                                            running: true
+                                            onDurationChanged: {
+                                                restart()
+                                            }
                                         }
                                     }
                                 }
 
                                 Rectangle {
-                                    id: marker
-                                    property var position: Qt.rect(0,0,0,0)
-                                    x: position.x-1
-                                    y: position.y
-                                    width: 2
-                                    height: position.height
-                                    visible: height != 0
-
-                                    color: root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
-
-                                    opacity: markerMouseArea.active || root.inactive ? 0.8 : blink
-
-                                    MouseArea {
-                                        id: markerMouseArea
-                                        anchors.fill: parent
-                                        anchors.leftMargin: -5
-                                        anchors.rightMargin: -5
-                                        hoverEnabled: true
-
-                                        property var active: containsMouse || dragging
-                                        property var dragging: false
-                                        property var startPosition: Qt.point(0,0)
-                                        property var markerStartPosition: Qt.point(0,0)
-
-                                        onPressed: {
-                                            startPosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                            markerStartPosition = textArea.area.mapFromItem(textArea, Qt.point(marker.position.x, marker.position.y))
-                                        }
-
-                                        onReleased: {
-                                            dragging = false
-                                        }
-
-                                        Timer {
-                                            id: cooldown
-                                            interval: 10
-                                        }
-
-                                        onPositionChanged: {
-                                            var mousePosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                            if(pressedButtons & Qt.LeftButton) {
-                                                var delta = Qt.point(mousePosition.x-startPosition.x, mousePosition.y-startPosition.y)
-                                                if(!dragging) {
-                                                    if(Math.pow(delta.x*delta.x + delta.y*delta.y, 0.5) > 5) {
-                                                        dragging = true
-                                                    }
-                                                } else {
-                                                    if(!cooldown.running) {
-                                                        var boxPosition = textArea.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                                        if(boxPosition.y < 0) {
-                                                            textArea.scrollBar.decrease()
-                                                            cooldown.start()
-                                                        } else if (boxPosition.y > textArea.height) {
-                                                            textArea.scrollBar.increase()
-                                                            cooldown.start()
-                                                        }
-                                                    }
-
-                                                    var x = Math.floor(markerStartPosition.x + delta.x)
-                                                    var dy = Math.floor(delta.y/marker.height) * marker.height
-                                                    var y = Math.floor(markerStartPosition.y + dy + marker.height/2)
-                                                    var p = textArea.area.positionAt(x, y)
-
-                                                    if(p != modelData.marker) {
-                                                        modelData.moveMarker(p)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    property var blink: 0.8
-
-                                    NumberAnimation on blink {
-                                        id: animation;
-                                        from: 1.0
-                                        to: 0.2
-                                        duration: GUI.isGenerating ? 500 : 1000
-                                        loops: Animation.Infinite
-                                        running: true
-                                        onDurationChanged: {
-                                            restart()
-                                        }
-                                    }
+                                    visible: root.active
+                                    anchors.fill: textArea
+                                    color: "transparent"
+                                    opacity: 0.3
+                                    border.color: COMMON.accent(0)
                                 }
-                            }
-
-                            Rectangle {
-                                visible: root.active
-                                anchors.fill: textArea
-                                color: "transparent"
-                                opacity: 0.3
-                                border.color: COMMON.accent(0)
                             }
                         }
                     }

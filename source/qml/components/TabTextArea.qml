@@ -3,6 +3,8 @@ import QtQuick.Controls 2.15
 
 import gui 1.0
 
+import "../style"
+
 Rectangle {
     id: root
 
@@ -23,10 +25,11 @@ Rectangle {
     function ensureVisible(position) {
         var pos = getPositionRectangle(position)
         var delta = 0
-        if(pos.y-5 < 0) {
-            delta = pos.y-5
-        } else if(pos.y+pos.height+5 > root.height) {
-            delta = (pos.y+pos.height+5)-root.height
+        var diff = 9
+        if(pos.y-diff < 0) {
+            delta = pos.y-diff
+        } else if(pos.y+pos.height+diff > root.height) {
+            delta = (pos.y+pos.height+diff)-root.height
         }
         if(delta != 0) {
             control.contentY += delta
@@ -89,7 +92,7 @@ Rectangle {
             anchors.right: control.right
             anchors.rightMargin: -1
             barWidth: 5
-            color: COMMON.bg3
+            color: COMMON.bg2_5
             hoverColor: COMMON.bg4
             pressedColor: COMMON.bg5
             policy: control.height >= control.contentHeight ? ScrollBar.AlwaysOff : ScrollBar.AlwaysOn
@@ -110,6 +113,25 @@ Rectangle {
 
         onContentXChanged: {
             root.layout()
+        }
+
+        Rectangle {
+            id: bottomLine
+            x: 1
+            width: parent.width-2
+            height: 1
+            anchors.bottom: textArea.bottom
+            anchors.bottomMargin: textArea.bottomPadding - 11
+            color: COMMON.bg4
+        }
+
+        Rectangle {
+            anchors.topMargin: 1
+            anchors.top: bottomLine.top
+            anchors.left: bottomLine.left
+            anchors.right: bottomLine.right
+            anchors.bottom: textArea.bottom
+            color: COMMON.bg0_5
         }
 
         Rectangle {
@@ -136,11 +158,11 @@ Rectangle {
         TextArea {
             id: textArea
             width: parent.width
-            height: Math.max(contentHeight+topPadding+bottomPadding, control.height)
-            topPadding: 5
+            height: Math.max(contentHeight+topPadding+bottomPadding-1, control.height)
+            topPadding: 11
             leftPadding: 5
             rightPadding: 10
-            bottomPadding: 5
+            bottomPadding: control.height-(textArea.font.pixelSize+17)
             wrapMode: TextArea.Wrap
             selectByMouse: true
             persistentSelection: true

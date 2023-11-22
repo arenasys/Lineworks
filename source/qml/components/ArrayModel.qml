@@ -3,7 +3,7 @@ import QtQuick 2.15
 ListModel {
     property var source
     property var current: []
-    property var unique: false
+    property var unique: false // avoids object destruction/recreation, requires all object to be unique, slower
     property var debug: false
 
     function doAppend(obj) {
@@ -148,28 +148,28 @@ ListModel {
         for(var i = 0; i < source.length; i++) {
             next.push(source[i])
         }
-        
+
         for(var i = 0; i < current.length; i++) {
             if(!next.includes(current[i])) {
                 doRemove(i)
                 i--;
             }
         }
-        
+
         var sub = [];
         for(var i = 0; i < next.length; i++) {
             if(current.includes(next[i])) {
                 sub.push(next[i])
             }
         }
-        
+
         for(var i = 0; i < sub.length; i++) {
             if(current[i] != sub[i]) {
                 var j = current.indexOf(sub[i]);
                 doMove(j, i)
             }
         }
-        
+
         for(var i = 0; i < next.length; i++) {
             if(!current.includes(next[i])) {
                 doInsert(i, next[i])
