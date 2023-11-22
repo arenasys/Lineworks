@@ -294,6 +294,8 @@ FocusReleaser {
                             bindMap: GUI.modelParameters
                             bindKeyCurrent: "model_path"
                             bindKeyModel: "model_paths"
+
+                            override: value == "" ? "No models" : ""
                         }
 
                         SSlider {
@@ -776,7 +778,19 @@ FocusReleaser {
                             smooth: false
                         }
 
+                        SIcon {
+                            visible: backendMode.value == "Remote"
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.right: restartButton.left
+                            width: height
+                            iconColor: GUI.isConnected ? COMMON.accent(0, 0.6, 0.5) : COMMON.bg4
+                            tooltip: GUI.isConnected ? "Connected" : "Not connected"
+                            icon: GUI.isConnected ? "qrc:/icons/lightning.svg" : "qrc:/icons/dash.svg"
+                        }
+
                         SIconButton {
+                            id: restartButton
                             visible: backendMode.value == "Remote" && !GUI.isConnecting
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
@@ -785,8 +799,20 @@ FocusReleaser {
                             color: "transparent"
                             iconColor: COMMON.bg4
                             iconHoverColor: COMMON.bg7
-                            tooltip: GUI.isConnected ? "Connected" : "Not connected"
-                            icon: GUI.isConnected ? "qrc:/icons/lightning.svg" : "qrc:/icons/dash.svg"
+                            tooltip: GUI.isConnected ? "Reconnect?" : "Connect?"
+                            icon: "qrc:/icons/refresh.svg"
+                        }
+
+                        RotationAnimator {
+                            loops: Animation.Infinite
+                            target: restartButton
+                            from: 0
+                            to: -360
+                            duration: 1000
+                            running: GUI.isConnecting
+                            onRunningChanged: {
+                                restartButton.rotation = 0
+                            }
                         }
 
                         MouseArea {

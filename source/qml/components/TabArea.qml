@@ -401,7 +401,6 @@ Rectangle {
                                                     }
                                                 }
                                                 indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
-                                                //console.log(textArea.area.text.slice(p.x, p.y), indicator.position)
                                             }
 
                                             Connections {
@@ -492,6 +491,7 @@ Rectangle {
                                     }
 
                                     area.onTextChanged: {
+                                        textArea.lock = false
                                         if(textArea.setCursor != null) {
                                             if(textArea.area.text.length < textArea.setCursor) {
                                                 textArea.area.cursorPosition = textArea.area.text.length
@@ -516,10 +516,22 @@ Rectangle {
                                             } else {
                                                 textArea.setCursor = c
                                             }
+
+                                            textArea.area.remove(start, end)
                                         }
 
                                         function onInsert(index, text) {
                                             textArea.insert(index, text)
+                                        }
+
+                                        function onMove(oldPos, newPos) {
+                                            if(oldPos != -1) {
+                                                textArea.area.remove(oldPos, oldPos+1)
+                                            }
+                                            if(newPos != -1) {
+                                                textArea.area.insert(newPos, "\u00AD")
+                                            }
+
                                         }
 
                                         function onContentChanged() {
@@ -531,7 +543,8 @@ Rectangle {
 
                                     Component.onCompleted: {
                                         modelData.setHighlighting(area.textDocument)
-                                        textArea.insert(0, modelData.initial)
+                                        area.insert(0, modelData.initial)
+                                        area.cursorPosition = 0
                                     }
 
                                     MouseArea {
@@ -554,11 +567,13 @@ Rectangle {
                                     Rectangle {
                                         id: marker
                                         property var position: Qt.rect(0,0,0,0)
-                                        x: position.x-1
-                                        y: position.y
-                                        width: 2
-                                        height: position.height
+                                        x: horizontal ? position.x+2 : position.x-1
+                                        y: horizontal ? position.y + position.height - 5 : position.y
+                                        width: horizontal ? 10 : 2
+                                        height: horizontal ? 2 : position.height
                                         visible: height != 0
+
+                                        property var horizontal: modelData.marker == -1
 
                                         color: root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
 

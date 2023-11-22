@@ -15,24 +15,6 @@ Rectangle {
     property alias control: control
     property alias scrollBar: controlScrollBar
 
-    function getPositionRectangle(position) {
-        var rect = textArea.positionToRectangle(position)
-        return root.mapFromItem(textArea, rect)
-    }
-
-    function ensureVisible(position) {
-        var pos = getPositionRectangle(position)
-        var delta = 0
-        if(pos.y-5 < 0) {
-            delta = pos.y-5
-        } else if(pos.y+pos.height+5 > root.height) {
-            delta = (pos.y+pos.height+5)-root.height
-        }
-        if(delta != 0) {
-            control.contentY += delta
-        }
-    }
-
     function layout() {
         return
     }
@@ -160,24 +142,6 @@ Rectangle {
             font.family: monospace ? "Source Code Pro" : "Cantarell"
             font.pointSize: pointSize * COORDINATOR.scale
             color: COMMON.fg1
-
-            onCursorRectangleChanged: {
-                root.ensureVisible(cursorPosition)
-            }
-
-            Keys.onPressed: {
-                if(event.modifiers & Qt.ControlModifier) {
-                    switch(event.key) {
-                    case Qt.Key_C:
-                        var text = root.clean(textArea.selectedText)
-                        if(text != textArea.selectedText) {
-                            GUI.copyText(text)
-                            event.accepted = true
-                        }
-                        break;
-                    }
-                }
-            }
         }
 
         MouseArea {

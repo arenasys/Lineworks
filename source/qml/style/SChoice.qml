@@ -23,6 +23,8 @@ Item {
     property var rightPadding: padded
     property var readonly: true
 
+    property var override: ""
+
     function edit() {
         if(!readonly) {
             valueEditText.forceActiveFocus()
@@ -371,6 +373,38 @@ Item {
             }
 
             Rectangle {
+                visible: overrideText.visible
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: valueText.contentWidth + 12
+                anchors.margins: 1
+                color: COMMON.light ? COMMON.bg2 : COMMON.bg2_5
+            }
+
+            SText {
+                id: overrideText
+                anchors.fill: parent
+
+                anchors.right: parent.right
+                anchors.left: labelText.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                leftPadding: 5
+                rightPadding: 7
+
+                color: COMMON.fg2
+                pointSize: COMMON.pointLabel
+
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+                
+                text: root.override
+                visible: root.override != ""
+            }
+
+            Rectangle {
                 anchors.top: valueEditText.top
                 anchors.right: valueEditText.right
                 anchors.bottom: valueEditText.bottom
@@ -440,7 +474,7 @@ Item {
 
             contentItem: ListView {
                 clip: true
-                implicitHeight: contentHeight+2
+                implicitHeight: control.count > 0 ? contentHeight+2 : 0
                 model: control.popup.visible ? control.delegateModel : null
                 currentIndex: control.highlightedIndex
                 boundsBehavior: Flickable.StopAtBounds
@@ -465,6 +499,7 @@ Item {
             }
 
             background: Item {
+                visible: control.count > 0
                 SGlow {
                     anchors.fill: parent
                     anchors.margins: 10

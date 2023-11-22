@@ -34,6 +34,7 @@ class Tab(QObject):
     lastUpdated = pyqtSignal()
     insert = pyqtSignal(int, str)
     remove = pyqtSignal(int, int)
+    move = pyqtSignal(int, int)
     def __init__(self, parent, name):
         super().__init__(parent)
         self.gui = parent.gui
@@ -107,9 +108,17 @@ class Tab(QObject):
                 marker -= 1
 
             text = self._content
-            text = text.replace(chr(MARK), '')
+
+            old = -1
+            if chr(MARK) in text:
+                old = text.index(chr(MARK))
+                text = text.replace(chr(MARK), '')
+                
             if marker != len(text):
+                self.move.emit(old, marker)
                 text = text[:marker] + chr(MARK) + text[marker:]
+            else:
+                self.move.emit(old, -1)
             self.content = text
 
     @pyqtSlot(str, result=str)

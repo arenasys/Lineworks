@@ -297,12 +297,20 @@ class GUI(QObject):
     
     @pyqtProperty(misc.VariantMap, notify=updated)
     def backendParameters(self):
-        return self._backend_parameters
+        return self._backend_parameters  
     
     @pyqtSlot(str)
     def backendUpdated(self, key):
-        if key == "mode":
+        if key == "mode" and self._backend_parameters.get("mode") == "Local":
             self.restartBackend()
+        else:
+            self.resetState()
+
+    def resetState(self):
+        self._pending_model = None
+        self._current_model = None
+        self._status = "idle"
+        self.setModels([])
         self.workingUpdated.emit()
 
     @pyqtSlot()
@@ -313,10 +321,7 @@ class GUI(QObject):
             if not self._backend.wait(500):
                 self._backend.terminate()
 
-        self._pending_model = None
-        self._current_model = None
-        self._status = "idle"
-        self.workingUpdated.emit()
+        self.resetState()
 
         mode = self._backend_parameters.get("mode")
         if mode == "Local":
@@ -473,12 +478,16 @@ class GUI(QObject):
         return self._status == "generating"
     
     @pyqtProperty(bool, notify=workingUpdated)
+    def isRemote(self):
+        return self._backend and type(self._backend) == backend.RemoteBackend
+
+    @pyqtProperty(bool, notify=workingUpdated)
     def isConnected(self):
-        return self._remote_status == "connected"
+        return self._remote_status == "connected" and self.isRemote
     
     @pyqtProperty(bool, notify=workingUpdated)
     def isConnecting(self):
-        return self._remote_status == "connecting"
+        return self._remote_status == "connecting" and self.isRemote
     
     @pyqtProperty(str, notify=workingUpdated)
     def currentModel(self):
@@ -487,9 +496,22 @@ class GUI(QObject):
         if self._pending_model:
             return self._pending_model["model_path"]
         return ""
+    
+    def setModels(self, models, model=None):
+        self._model_parameters.set("model_paths", models)
+        if models:
+            if model in models:
+                self._model_parameters.set("model_path", model)
+            else:
+                self._model_parameters.set("model_path", models[0])
+        else:
+            self._model_parameters.set("model_path", "")
 
     @pyqtSlot()
     def generate(self):
+        if not self._current_model:
+            return
+
         area = self._tabs.current
         self._current_tab = area._tabs[area.current]
         parameters = copy.deepcopy(self._gen_parameters._map)
@@ -517,6 +539,8 @@ class GUI(QObject):
 
     @pyqtSlot()
     def regenerate(self):
+        if not self._current_model:
+            return
         self.revert()
         self.generate()
 
@@ -549,6 +573,8 @@ class GUI(QObject):
 
             if status in {"connected", "connecting", "disconnected"}:
                 self._remote_status = status
+                if status == "disconnected":
+                    self.resetState()
             else:
                 self._status = status
             self.workingUpdated.emit()
@@ -556,12 +582,7 @@ class GUI(QObject):
         if typ == "options":
             model = self._model_parameters.get("model_path")
             models = response["data"]["models"]
-
-            self._model_parameters.set("model_paths", models)
-            if not model in models and models:
-                self._model_parameters.set("model_path", models[0])
-            if not models:
-                self._model_parameters.set("model_path", "")
+            self.setModels(models, model)
 
         if typ == "done":
             if self._status == "loading":
@@ -576,14 +597,13 @@ class GUI(QObject):
             if self._status == "unloading":
                 self._current_model = None
                 self._pending_model = None
-
-            #self._current_tab = None
+            
             self._status = "idle"
             self.workingUpdated.emit()
 
         if typ == "output":
             output = ''.join([c for c in response["data"]["output"] if ord(c) < 0x10000])
-            if output.strip():
+            if self._current_entry and output.strip():
                 self._current_entry._output = output
                 self._current_entry._time = int(time.time()*1000)
                 self.addHistory(self._current_entry)
@@ -618,7 +638,8 @@ class GUI(QObject):
 
         if typ == "stream":
             stream = ''.join([c for c in response["data"]["next"] if ord(c) < 0x10000])
-            self._current_tab.stream(stream)
+            if self._current_tab:
+                self._current_tab.stream(stream)
 
     @pyqtSlot()
     def initConfig(self):

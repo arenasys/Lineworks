@@ -17,12 +17,17 @@ Rectangle {
     property alias control: control
     property alias scrollBar: controlScrollBar
 
+    property var lock: false
+
     function getPositionRectangle(position) {
         var rect = textArea.positionToRectangle(position)
         return root.mapFromItem(textArea, rect)
     }
 
     function ensureVisible(position) {
+        if(lock) {
+            return;
+        }
         var pos = getPositionRectangle(position)
         var delta = 0
         var diff = 9
