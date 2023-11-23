@@ -485,9 +485,23 @@ Rectangle {
 
                                     property var setCursor: null
 
+
                                     onTextChanged: {
-                                        modelData.content = area.text
+                                        if(area.text[area.text.length-1] == "\u00AD") {
+                                            if(!moving) {
+                                                area.remove(area.text.length-1,area.text.length)
+                                            }
+                                        } else if(area.text.includes("\u00AD") || modelData.marker == -1) { //has marker
+                                            modelData.content = area.text
+                                        } else if(area.cursorPosition == area.text.length) { // move marker to end
+                                            modelData.content = area.text
+                                        } else { //move marker to cursor
+                                            if(!moving) {
+                                                area.insert(area.cursorPosition, "\u00AD")
+                                            }
+                                        }
                                         layout()
+                                        return                               
                                     }
 
                                     area.onTextChanged: {
@@ -504,6 +518,19 @@ Rectangle {
 
                                     Connections {
                                         target: modelData
+
+                                        function onMarkerChanged() {
+                                            textArea.layout()
+                                        }
+
+                                        function onFocus() {
+                                            textArea.forceActiveFocus()
+                                        }
+
+                                        function onSet() {
+                                            modelData.moveMarker(textArea.area.cursorPosition)
+                                            textArea.ensureVisible(textArea.area.cursorPosition)
+                                        }
 
                                         function onRemove(start, end) {
                                             var c = textArea.area.cursorPosition
@@ -525,17 +552,32 @@ Rectangle {
                                         }
 
                                         function onMove(oldPos, newPos) {
+                                            textArea.moving = true
+
                                             if(oldPos != -1) {
                                                 textArea.area.remove(oldPos, oldPos+1)
                                             }
                                             if(newPos != -1) {
                                                 textArea.area.insert(newPos, "\u00AD")
+                                                textArea.moving = false
+                                                textArea.area.cursorPosition = newPos
+                                            } else {
+                                                textArea.moving = false
+                                                textArea.area.cursorPosition = textArea.area.text.length
                                             }
-
                                         }
+
+                                        function debugPrint(text) {
+                                            var chrs = []
+                                            for(var i = 0; i < text.length; i++) {
+                                                chrs.push(text.charCodeAt(i))
+                                            }
+                                            console.log(chrs)
+                                        } 
 
                                         function onContentChanged() {
                                             if(modelData.content != textArea.text) {
+                                                console.log("CHANGED")
                                                 textArea.text = modelData.content
                                             }
                                         }
@@ -575,7 +617,14 @@ Rectangle {
 
                                         property var horizontal: modelData.marker == -1
 
-                                        color: root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
+                                        color: {
+                                            if(false && modelData.marker != -1) {
+                                                if(modelData.marker == textArea.area.cursorPosition || modelData.marker == textArea.area.cursorPosition-1) {
+                                                    return COMMON.fg1
+                                                }
+                                            }
+                                            return root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
+                                        }
 
                                         opacity: markerMouseArea.active || root.inactive ? 0.8 : blink
 
@@ -585,6 +634,7 @@ Rectangle {
                                             anchors.leftMargin: -5
                                             anchors.rightMargin: -5
                                             hoverEnabled: true
+                                            visible: false
 
                                             property var active: containsMouse || dragging
                                             property var dragging: false
@@ -594,6 +644,12 @@ Rectangle {
                                             onPressed: {
                                                 startPosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
                                                 markerStartPosition = textArea.area.mapFromItem(textArea, Qt.point(marker.position.x, marker.position.y))
+
+                                                if(modelData.marker != -1) {
+                                                    textArea.area.cursorPosition = modelData.marker
+                                                } else {
+                                                    textArea.area.cursorPosition = textArea.area.text.length
+                                                }
                                             }
 
                                             onReleased: {
@@ -631,7 +687,7 @@ Rectangle {
                                                         var p = textArea.area.positionAt(x, y)
 
                                                         if(p != modelData.marker) {
-                                                            modelData.moveMarker(p)
+                                                            //modelData.moveMarker(p)
                                                         }
                                                     }
                                                 }

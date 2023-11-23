@@ -18,6 +18,7 @@ Rectangle {
     property alias scrollBar: controlScrollBar
 
     property var lock: false
+    property var moving: false
 
     function getPositionRectangle(position) {
         var rect = textArea.positionToRectangle(position)
@@ -25,7 +26,7 @@ Rectangle {
     }
 
     function ensureVisible(position) {
-        if(lock) {
+        if(lock || moving) {
             return;
         }
         var pos = getPositionRectangle(position)
@@ -132,6 +133,7 @@ Rectangle {
         }
 
         Rectangle {
+            id: bottomArea
             anchors.topMargin: 1
             anchors.top: bottomLine.top
             anchors.left: bottomLine.left
@@ -205,6 +207,40 @@ Rectangle {
                         break;
                     }
                 }
+
+                switch(event.key) {
+                case Qt.Key_Delete:
+                    var c = textArea.text[textArea.cursorPosition]
+                    if(c == '\u00AD') {
+                        textArea.cursorPosition += 1
+                    }
+                    break;
+                case Qt.Key_Backspace:
+                    var c = textArea.text[textArea.cursorPosition-1]
+                    if(c == '\u00AD') {
+                        textArea.cursorPosition -= 1
+                    }
+                    break;
+                case Qt.Key_Right:
+                    var c = textArea.text[textArea.cursorPosition]
+                    if(c == '\u00AD') {
+                        textArea.cursorPosition += 1
+                    }
+                    break;
+                case Qt.Key_Left:
+                    var c = textArea.text[textArea.cursorPosition-1]
+                    if(c == '\u00AD') {
+                        textArea.cursorPosition -= 1
+                    }
+                    break;
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: bottomArea
+            onPressed: {
+                return
             }
         }
 

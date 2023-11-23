@@ -800,6 +800,14 @@ class GUI(QObject):
         self._tabs.clearAreas()
         self._tabs.addDefaultArea()
         self.updated.emit()
+
+    @pyqtSlot()
+    def resetFocus(self):
+        self._tabs.currentTab().forceFocus()
+
+    @pyqtSlot()
+    def setMarker(self):
+        self._tabs.currentTab().setMarker()
     
 def registerTypes():
     qmlRegisterUncreatableType(HistoryEntry, "gui", 1, 0, "HistoryEntry", "Not a QML type")

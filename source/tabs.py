@@ -35,6 +35,8 @@ class Tab(QObject):
     insert = pyqtSignal(int, str)
     remove = pyqtSignal(int, int)
     move = pyqtSignal(int, int)
+    focus = pyqtSignal()
+    set = pyqtSignal()
     def __init__(self, parent, name):
         super().__init__(parent)
         self.gui = parent.gui
@@ -230,6 +232,12 @@ class Tab(QObject):
 
         context = clean_text(context)
         return context
+    
+    def forceFocus(self):
+        self.focus.emit()
+
+    def setMarker(self):
+        self.set.emit()
     
     def toJSON(self):
         data = {

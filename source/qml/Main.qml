@@ -1342,7 +1342,7 @@ FocusReleaser {
     }
 
     onReleaseFocus: {
-        keyboardFocus.forceActiveFocus()
+        GUI.resetFocus()
     }
 
     Item {

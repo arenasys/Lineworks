@@ -161,7 +161,7 @@ SMenuBar {
     SMenu {
         title: "Edit"
         clipShadow: true
-        width: 200
+        width: 250
         SMenuItem {
             text: "Generate"
             shortcut: "Ctrl+Return"
@@ -233,6 +233,17 @@ SMenuBar {
 
         SMenuSeparator {}
 
+        SMenuItem {
+            text: "Set Marker"
+            shortcut: "Ctrl+E, Ctrl+Click"
+            global: true
+            onPressed: {
+                GUI.setMarker()
+            }
+        }
+
+        SMenuSeparator { }
+
         SMenu {
             title: "Switch to..."
             
@@ -274,6 +285,20 @@ SMenuBar {
         }
 
         Shortcut {
+            sequences: ["Ctrl+W"]
+            onActivated: {
+                if(!GUI.isGenerating) {
+                    GUI.generate()
+                }
+            }
+        }
+
+        Shortcut {
+            sequences: ["Ctrl+E"]
+            onActivated: GUI.setMarker()
+        }
+
+        Shortcut {
             sequences: ["Ctrl+1"]
             onActivated: GUI.setStopCondition("Sentance")
         }
@@ -311,6 +336,14 @@ SMenuBar {
             global: true
             onPressed: {
                 GUI.tabs.current.prevTab()
+            }
+        }
+
+        SMenuItem {
+            text: "Set Tab"
+            shortcut: "Alt+1..9"
+            onPressed: {
+
             }
         }
 
