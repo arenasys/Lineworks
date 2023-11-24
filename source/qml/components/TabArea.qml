@@ -472,6 +472,32 @@ Rectangle {
                                         textArea.ensureVisible(index+text.length)
                                     }
 
+
+                                    Timer {
+                                        id: checkTimer
+                                        interval: 1
+                                        onTriggered: {
+                                            textArea.check()
+                                            textArea.area.cursorVisible = true
+                                        }
+                                    }
+
+                                    function check() {
+                                        // U+00AD has width at newlines, fix the alignment difference
+                                        if(modelData.marker == -1) {
+                                            return
+                                        }
+                                        if(modelData.marker + 1 != textArea.area.cursorPosition) {
+                                            return
+                                        }
+
+                                        var p = textArea.area.cursorRectangle
+
+                                        if(p.x != marker.position.x) {
+                                            textArea.area.cursorPosition -= 1
+                                        }
+                                    }
+
                                     function layout() {
                                         if(modelData.marker != -1) {
                                             if(area.length >= modelData.marker) {
@@ -484,7 +510,6 @@ Rectangle {
                                     }
 
                                     property var setCursor: null
-
 
                                     onTextChanged: {
                                         if(area.text[area.text.length-1] == "\u00AD") {
@@ -516,6 +541,13 @@ Rectangle {
                                         }
                                     }
 
+                                    area.onCursorPositionChanged: {
+                                        textArea.area.cursorVisible = false
+                                        // on keyboard input the cursor position changes before text changes
+                                        // need to wait an instant
+                                        checkTimer.start()
+                                    }
+
                                     Connections {
                                         target: modelData
 
@@ -528,7 +560,9 @@ Rectangle {
                                         }
 
                                         function onSet() {
-                                            modelData.moveMarker(textArea.area.cursorPosition)
+                                            if(!GUI.isGenerating) {
+                                                modelData.moveMarker(textArea.area.cursorPosition)
+                                            }
                                             textArea.ensureVisible(textArea.area.cursorPosition)
                                         }
 
@@ -597,7 +631,7 @@ Rectangle {
                                             if ((mouse.button == Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier)) {
                                                 var position = textArea.area.mapFromItem(textMouseArea, Qt.point(mouse.x, mouse.y))
                                                 var p = textArea.area.positionAt(position.x, position.y)
-                                                if(p != modelData.marker) {
+                                                if(p != modelData.marker && !GUI.isGenerating) {
                                                     modelData.moveMarker(p)
                                                 }
                                             } else {

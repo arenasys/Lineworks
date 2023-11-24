@@ -164,8 +164,9 @@ SMenuBar {
         width: 250
         SMenuItem {
             text: "Generate"
-            shortcut: "Ctrl+Return"
+            shortcut: "Ctrl+Return, Ctrl+W"
             global: true
+            disabled: !GUI.canGenerate
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.generate()
@@ -177,6 +178,7 @@ SMenuBar {
             text: "Regenerate"
             shortcut: "Ctrl+Tab"
             global: true
+            disabled: !GUI.canGenerate
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.regenerate()
@@ -188,6 +190,7 @@ SMenuBar {
             text: "Revert"
             shortcut: "Ctrl+`"
             global: true
+            disabled: GUI.isGenerating
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.revert()
@@ -200,6 +203,7 @@ SMenuBar {
             text: "Abort"
             shortcut: "Ctrl+Q"
             global: true
+            disabled: !GUI.isGenerating
             onPressed: {
                 if(GUI.isGenerating) {
                     GUI.abort()
@@ -213,6 +217,7 @@ SMenuBar {
             text: "Load model"
             shortcut: "Ctrl+L"
             global: true
+            disabled: GUI.modelIsLoaded || GUI.modelIsWorking
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.load()
@@ -224,6 +229,7 @@ SMenuBar {
             text: "Unload model"
             shortcut: "Ctrl+U"
             global: true
+            disabled: !GUI.modelIsLoaded
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.unload()
@@ -237,6 +243,7 @@ SMenuBar {
             text: "Set Marker"
             shortcut: "Ctrl+E, Ctrl+Click"
             global: true
+            disabled: GUI.isGenerating
             onPressed: {
                 GUI.setMarker()
             }
@@ -285,7 +292,7 @@ SMenuBar {
         }
 
         Shortcut {
-            sequences: ["Ctrl+W"]
+            sequences: ["Ctrl+W", "Ctrl+Return"]
             onActivated: {
                 if(!GUI.isGenerating) {
                     GUI.generate()

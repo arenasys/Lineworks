@@ -49,6 +49,8 @@ class HistoryEntry(QObject):
         self._model = {}
         self._output = ""
         self._time = 0
+        self._index = 0
+        self._folder = ""
 
     @pyqtProperty(str, notify=updated)
     def label(self):
@@ -59,6 +61,10 @@ class HistoryEntry(QObject):
     @pyqtProperty(str, notify=updated)
     def id(self):
         return str(self._time)
+    
+    @pyqtProperty(int, notify=updated)
+    def index(self):
+        return self._index
     
     @pyqtProperty(str, notify=updated)
     def context(self):
@@ -82,12 +88,19 @@ class HistoryEntry(QObject):
     def output(self):
         b = self._output.rstrip().replace("\n", "<br>")
         return b
+    
+    def contains(self, text):
+        if text.casefold() in self._output.casefold():
+            return True
+        return False
 
     def toJSON(self):
         data = {
             "context": self._context,
             "output": self._output,
             "time": self._time,
+            "index": self._index,
+            "folder": self._folder,
             "trailing": self._trailing,
             "gen": copy.deepcopy(self._parameters),
             "model": copy.deepcopy(self._model)
@@ -98,6 +111,8 @@ class HistoryEntry(QObject):
         self._context = data["context"]
         self._output = data["output"]
         self._time = data["time"]
+        self._index = data["index"]
+        self._folder = data["folder"]
         self._trailing = data["trailing"]
         self._parameters = copy.deepcopy(data["gen"])
         self._model = copy.deepcopy(data["model"])
@@ -110,6 +125,7 @@ class GUI(QObject):
 
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
+    clear = pyqtSignal()
     autosaving = pyqtSignal()
 
     def __init__(self, parent):
@@ -150,6 +166,12 @@ class GUI(QObject):
         }, strict=True)
         self._backend_parameters.updated.connect(self.backendUpdated)
 
+        self._history = {}
+        self._history_order = []
+        self._history_search = ""
+        self._history_results = []
+        self._current_entry = None
+
         self._file = None
         self._recent = []
 
@@ -163,10 +185,6 @@ class GUI(QObject):
         self._pending_model = None
         self._current_model = None
         self._current_tab = None
-
-        self._history = {}
-        self._history_order = []
-        self._current_entry = None
 
         parent.aboutToQuit.connect(self.stop)
 
@@ -335,19 +353,69 @@ class GUI(QObject):
 
     @pyqtProperty(list, notify=historyUpdated)
     def history(self):
-        return [self._history[i] for i in self._history_order[::-1]]
+        order = self._history_order
+        if self._history_search:
+            order = self._history_results
+        return [str(i) for i in order[::-1]]
 
+    @pyqtSlot(str, result=HistoryEntry)
+    def getHistory(self, id):
+        id = int(id)
+        if id in self._history:
+            return self._history[id]
+        return None
+    
     @pyqtSlot(HistoryEntry)
     def addHistory(self, entry):
+        i = 0
+        for id in self._history:
+            ii = self._history[id]._index
+            if ii > i:
+                i = ii
+        entry._index = i + 1
+
         id = entry._time
         self._history[id] = entry
         self._history_order += [id]
+
+        self.searchHistory()
+
+    @pyqtSlot(list)
+    def clearHistoryEntries(self, ids):
+        for i in ids:
+            ii = int(i)
+            if ii in self._history_order:
+                self._history_order.remove(ii)
+            if ii in self._history:
+                del self._history[ii]
         self.historyUpdated.emit()
+
+    @pyqtSlot(str)
+    def clearHistoryEntriesBelow(self, id):
+        i = int(id)
+        if i in self._history_order:
+            ids = [self._history[self._history_order[e]].id for e in range(0,self._history_order.index(i))]
+            self.clearHistoryEntries(ids)
 
     @pyqtSlot()
     def clearHistory(self):
         self._history = {}
         self._history_order = []
+        self._history_search = ""
+        self._history_results = []
+        self.historyUpdated.emit()
+
+    @pyqtSlot(str)
+    def searchHistory(self, text=None):
+        if text == None:
+            text = self._history_search
+        self._history_search = text
+        self._history_results = []
+
+        if text.strip() != "":
+            for i in self._history_order:
+                if self._history[i].contains(text):
+                    self._history_results += [i]
         self.historyUpdated.emit()
 
     @pyqtSlot()
@@ -476,6 +544,10 @@ class GUI(QObject):
     @pyqtProperty(bool, notify=workingUpdated)
     def isGenerating(self):
         return self._status == "generating"
+    
+    @pyqtProperty(bool, notify=workingUpdated)
+    def canGenerate(self):
+        return not (self.isGenerating or (self.isRemote and not self.isConnected) or (not self.modelIsLoaded))
     
     @pyqtProperty(bool, notify=workingUpdated)
     def isRemote(self):
@@ -799,6 +871,7 @@ class GUI(QObject):
         self.clearHistory()
         self._tabs.clearAreas()
         self._tabs.addDefaultArea()
+        self.clear.emit()
         self.updated.emit()
 
     @pyqtSlot()

@@ -10,7 +10,8 @@ MenuItem {
     implicitHeight: menuItemSize
     
     property var pointSize: 10.6
-    property var color: COMMON.fg1
+    property var color: disabled ? COMMON.fg3 : COMMON.fg1
+    property var disabled: false
 
     height: visible ? menuItemSize : 0
 
@@ -23,13 +24,19 @@ MenuItem {
     signal pressed()
 
     onClicked: {
-        menuItem.pressed()
+        if(!menuItem.disabled) {
+            menuItem.pressed()
+        }
     }
 
     Shortcut {
         enabled: menuItem.global
         sequence: menuItem.shortcut
-        onActivated: menuItem.pressed()
+        onActivated: {
+            if(!menuItem.disabled) {
+                menuItem.pressed()
+            }
+        }
     }
 
     indicator: Item {
@@ -99,9 +106,6 @@ MenuItem {
             visible: label.contentWidth <= label.width
         }
 
-
-
-
         SText {
             visible: label.contentWidth > label.width
             height: parent.height
@@ -114,9 +118,6 @@ MenuItem {
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideLeft
         }
-
-
-
         
         SText {
             height: parent.height
@@ -134,7 +135,7 @@ MenuItem {
     background: Rectangle {
         implicitWidth: 150
         implicitHeight: menuItemSize
-        color: backgroundMouseArea.containsMouse ? COMMON.bg4 : "transparent"
+        color: backgroundMouseArea.containsMouse && !menuItem.disabled ? COMMON.bg4 : "transparent"
 
         MouseArea {
             id: backgroundMouseArea

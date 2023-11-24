@@ -9,7 +9,8 @@ Item {
     property var label: "Label"
     property var tooltip: ""
     property alias model: control.model
-    property var mini: height == 20
+    property var mini: false
+    property var alt: false
     property var value: control.currentIndex == -1 ? overloadValue : (control.model.length == 0 ? "" : control.model[control.currentIndex])
     property alias currentIndex: control.currentIndex
 
@@ -363,11 +364,11 @@ Item {
                 anchors.bottom: parent.bottom
                 leftPadding: 5
                 rightPadding: 7
-
                 text: root.display(root.value)
-                pointSize: root.mini ? 7.7 : COMMON.pointValue
-                color: COMMON.fg1
-                horizontalAlignment: Text.AlignRight
+                pointSize: COMMON.pointValue
+                color: root.alt ? COMMON.fg2 : COMMON.fg1
+
+                horizontalAlignment: false ? Text.AlignLeft : Text.AlignRight
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
@@ -446,7 +447,13 @@ Item {
         background: Rectangle {
             implicitWidth: 120
             implicitHeight: 30
-            color: COMMON.light ? COMMON.bg2 : COMMON.bg2_5
+            color: {
+                if(root.alt) {
+                    return "transparent"
+                } else {
+                    return COMMON.light ? COMMON.bg2 : COMMON.bg2_5
+                }
+            }
             border.color: COMMON.bg4
             border.width: 1
         }

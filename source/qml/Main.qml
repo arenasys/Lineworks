@@ -961,9 +961,69 @@ FocusReleaser {
                     }
                 }
 
+                Rectangle {
+                    id: searchBox
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 23
+                    anchors.margins: 5
+                    anchors.topMargin: 29
+                    color: COMMON.bg2
+                    border.color: COMMON.bg4
+
+                    STextInput {
+                        id: searchInput
+                        anchors.fill: parent
+                        color: COMMON.fg1
+                        font.bold: false
+                        pointSize: 9.0
+                        selectByMouse: true
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                        topPadding: 1
+
+                        function search() {
+                            GUI.searchHistory(searchInput.text)
+                        }
+
+                        onAccepted: {
+                            search()
+                        }
+
+                        Keys.onPressed: {
+                            switch(event.key) {
+                            case Qt.Key_Escape:
+                                searchInput.text = ""
+                                search()
+                                break;
+                            }
+                        }
+
+                        Connections {
+                            target: GUI
+                            function onClear() {
+                                searchInput.text = ""
+                            }
+                        }
+                    }
+
+                    SText {
+                        text: "Search..."
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        font.bold: false
+                        pointSize: COMMON.pointLabel
+                        leftPadding: 8
+                        topPadding: 1
+                        color: COMMON.fg2
+                        visible: !searchInput.text && !searchInput.activeFocus
+                    }
+                }
+
                 ListView {
                     anchors.fill: parent
-                    anchors.topMargin: 30
+                    anchors.topMargin: 57
                     anchors.margins: 6
                     id: historyList
                     interactive: false
@@ -1012,12 +1072,12 @@ FocusReleaser {
 
                     delegate: Rectangle {
                         id: row
-                        property var entry: modelData
+                        property var entry: GUI.getHistory(modelData)
                         property var active: preview.locked && preview.target == entry
 
                         color: active ? COMMON.bg2_5 : (entryMouse.containsMouse ? COMMON.bg2 : COMMON.bg1_5)
                         height: 20
-                        width: parent != null ? parent.width - (historyList.contentHeight > historyList.height ? 6 : 0)  : 20
+                        width: parent != null ? parent.width - (historyList.contentHeight > historyList.height ? 6 : 0)  : 20 
 
                         function activate() {
                             preview.target = entry
@@ -1040,7 +1100,6 @@ FocusReleaser {
                             color: COMMON.bg2_5
                         }
 
-                    
                         SText {
                             id: indexLabel
                             anchors.left: parent.left
@@ -1048,10 +1107,9 @@ FocusReleaser {
                             width: 2+Math.floor(Math.log10(GUI.history.length)+1)*9
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignHCenter
-                            text: historyList.model.count - index
+                            text: entry ? entry.index : ""
                             pointSize: 9.0
                             color: COMMON.fg2
-
                         }
 
                         Rectangle {
@@ -1072,7 +1130,7 @@ FocusReleaser {
                             rightPadding: 1
                             verticalAlignment: Text.AlignVCenter
                             horizontalAlignment: Text.AlignLeft
-                            text: entry.label
+                            text: entry ? entry.label : ""
                             pointSize: 9.0
                             color: COMMON.fg1_5
                             elide: Text.ElideRight
@@ -1096,12 +1154,71 @@ FocusReleaser {
                             color: COMMON.bg4
                         }
 
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: active
+                            color: "transparent"
+                            border.color: COMMON.bg0
+                            anchors.margins: 0
+                            anchors.bottomMargin: 1
+
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: active
+                                color: "transparent"
+                                border.color: COMMON.accent(0, 0.6, 0.35)
+                                anchors.margins: 1
+                            }
+                        }
+
+                        SContextMenu {
+                            id: entryContextMenu
+                            width: 120
+                            SContextMenuItem {
+                                text: "Copy"
+                                onPressed: {
+
+                                }
+                            }
+                            SMenuSeparator { }
+                            SContextMenuItem {
+                                text: "Clear"
+                                onPressed: {
+                                    preview.locked = false
+                                    row.entry = null
+                                    GUI.clearHistoryEntries([modelData])
+                                }
+                            }
+                            SContextMenuItem {
+                                text: "Clear below"
+                                disabled: searchInput.text != "" || index == historyList.count-1
+
+                                onPressed: {
+                                    GUI.clearHistoryEntriesBelow(modelData)
+                                    searchInput.text = ""
+                                    searchInput.search()
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.RightButton
+
+                            onPressed: {
+                                if(mouse.buttons & Qt.RightButton) {
+                                    entryContextMenu.popup()
+                                }
+                            }
+                        }
+
                         MouseArea {
                             id: entryMouse
                             anchors.fill: parent
                             hoverEnabled: true
                             property var startPosition: Qt.point(0,0)
                             property var dragged: false
+                            acceptedButtons: Qt.LeftButton
 
                             onClicked: {
                                 startPosition = Qt.point(mouse.x, mouse.y)
