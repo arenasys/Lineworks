@@ -14,6 +14,7 @@ import importlib
 import pkg_resources
 import json
 import hashlib
+import re
 
 import platform
 IS_WIN = platform.system() == 'Windows'
@@ -29,6 +30,12 @@ LLAMA_CPP_VERSIONS = {
         "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp311-cp311-manylinux_2_31_x86_64.whl",
         "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp311-cp311-manylinux_2_31_x86_64.whl"
     }
+}
+
+DICTIONARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dictionary")
+DICTIONARY = {
+    "en_US.dic": "https://raw.githubusercontent.com/arenasys/binaries/main/en_US.dic",
+    "en_US.aff": "https://raw.githubusercontent.com/arenasys/binaries/main/en_US.aff",
 }
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, pyqtProperty, QObject, QUrl, QCoreApplication, Qt, QElapsedTimer, QThread
@@ -122,6 +129,44 @@ def check(dependancies, enforce_version=True):
             pass
     return needed
 
+def download(url, path, headers={}):
+    import requests
+
+    if os.path.isdir(path):
+        filename = None
+        folder = path
+    else:
+        filename = path
+        folder = os.path.dirname(path)
+        os.makedirs(folder, exist_ok=True)
+
+    resp = requests.get(url, stream=True, timeout=10, headers=headers, allow_redirects=True)
+    total = int(resp.headers.get('content-length', 0))
+
+    content_length = resp.headers.get("content-length", 0)
+    if not content_length:
+        raise RuntimeError(f"response is empty")
+
+    content_type = resp.headers.get("content-type", "unknown")
+    content_disposition = resp.headers.get("content-disposition", "")
+
+    if not content_type in {"application/zip", "binary/octet-stream", "application/octet-stream", "multipart/form-data", "text/plain; charset=utf-8"}:
+        if not (content_type == "unknown" and "attachment" in content_disposition):
+            raise RuntimeError(f"{content_type} content type is not supported")
+
+    if not filename:
+        if content_disposition:
+            filename = re.findall("filename=\"(.+)\";?", content_disposition)[0]
+        else:
+            filename = url.rsplit("/",-1)[-1]
+        filename = os.path.join(folder, filename)
+
+    with open(filename+".tmp", 'wb') as file:
+        for data in resp.iter_content(chunk_size=1024):
+            file.write(data)
+
+    os.rename(filename+".tmp", filename)
+
 class Installer(QThread):
     output = pyqtSignal(str)
     installing = pyqtSignal(str)
@@ -135,6 +180,16 @@ class Installer(QThread):
     def run(self):
         for p in self.packages:
             pkg = "llama-cpp-python" if "llama-cpp-python" in p else p
+
+            if p == "hunspell-dictionaries":
+                self.installing.emit(pkg)
+                
+                for file, url in DICTIONARY.items():
+                    self.output.emit(f"DOWNLOADING {file} {url}")
+                    download(url, os.path.join(DICTIONARY_PATH, file))
+
+                self.installed.emit(pkg)
+                continue
 
             self.installing.emit(pkg)
             args = ["pip", "install", "-U", p]
@@ -192,7 +247,17 @@ class Coordinator(QObject):
         self._installed = []
         self._installing = ""
 
-        self._mode = "CPU"
+        self._mode = None
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+                if "mode" in cfg:
+                    self._mode = cfg["mode"]
+        except Exception:
+            pass
+        if not self._mode in self.modes:
+            self._mode = "CPU"
+            self.writeMode()
 
         self.in_venv = "VIRTUAL_ENV" in os.environ
         self.override = False
@@ -212,10 +277,25 @@ class Coordinator(QObject):
     @mode.setter
     def mode(self, mode):
         self._mode = self.modes[mode]
+        self.writeMode()
 
     @pyqtProperty(list, constant=True)
     def modes(self):
-        return ["CPU", "NVIDIA", "AMD"]
+        if IS_WIN:
+            return ["CPU", "NVIDIA"]
+        else:
+            return ["CPU", "NVIDIA", "AMD"]
+    
+    def writeMode(self):
+        cfg = {}
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception as e:
+            pass
+        cfg["mode"] = self._mode
+        with open("config.json", "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=4)
 
     @pyqtProperty(list, notify=updated)
     def packages(self):
@@ -243,11 +323,22 @@ class Coordinator(QObject):
             self.llama_version = pkg_resources.get_distribution("llama_cpp_python")
         except:
             pass
+        if not self.llama_version:
+            try:
+                self.llama_version = pkg_resources.get_distribution("llama_cpp_python_cuda")
+            except:
+                pass
+                
         self.required_need = check(self.required, self.enforce)
 
     def getNeeded(self):
         needed = self.required_need
 
+        for file in DICTIONARY.keys():
+            if not os.path.exists(os.path.join(DICTIONARY_PATH, file)):
+                needed = needed + ["hunspell-dictionaries"]
+                break
+        
         if not self.llama_version:
             needed = needed + ["llama-cpp-python"]
 
@@ -380,8 +471,10 @@ def start(engine, app):
     import gui
     import sql
     import tabs
+    import spellcheck
 
     sql.registerTypes()
+    spellcheck.registerTypes()
     tabs.registerTypes()
     gui.registerTypes()
 

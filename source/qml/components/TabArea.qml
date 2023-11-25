@@ -359,100 +359,10 @@ Rectangle {
                                 }
 
                                 Item {
-                                    id: last
-                                    signal layout()
-
-                                    Repeater {
-                                        model: ArrayModel {
-                                            id: indicators
-                                            source: modelData.last
-                                        }
-                                        
-                                        Rectangle {
-                                            id: indicator
-                                            function layout() {
-                                                if(value == 0 && index != 0) {
-                                                    return
-                                                }
-
-                                                var p = modelData
-                                                var l = textArea.area.text.length
-
-                                                if(p.x > l || p.y > l) {
-                                                    indicator.position = Qt.rect(0,0,0,0)
-                                                    return
-                                                }
-
-                                                var start = textArea.getPositionRectangle(p.x)
-                                                var end = textArea.getPositionRectangle(p.y)
-
-                                                if(start.y != end.y) {
-                                                    var end_tmp = textArea.getPositionRectangle(p.y-1)
-                                                    if(start.y != end_tmp.y) {
-                                                        var start_tmp = textArea.getPositionRectangle(p.x+1)
-                                                        if(start_tmp.y == end_tmp.y) {
-                                                            start = start_tmp
-                                                        } else {
-                                                            indicator.position = Qt.rect(0,0,0,0)
-                                                            return
-                                                        }
-                                                    } else {
-                                                        end = end_tmp
-                                                    }
-                                                }
-                                                indicator.position = Qt.rect(start.x, start.y, end.x-start.x, start.height)
-                                            }
-
-                                            Connections {
-                                                target: last
-                                                function onLayout() {
-                                                    layout()
-                                                }
-                                            }
-
-                                            Component.onCompleted: {
-                                                layout()
-                                            }
-
-                                            property var position: Qt.rect(0,0,0,0)
-                                            property var vertical: position.width == 0
-                                            property var value: 1
-
-                                            visible: position.height != 0
-
-                                            x: position.x-1
-                                            y: vertical ? position.y : (position.y + 7)
-                                            width: vertical ? 10 : (position.width+2)
-                                            height: vertical ? position.height : 10
-                                            radius: 5
-                                            color: COMMON.accent(0, 0.5, 0.4, value)
-
-                                            Timer {
-                                                running: true
-                                                repeat: true
-                                                interval: 50
-                                                onTriggered: {
-                                                    if(index == indicators.count-1 && content.working) {
-                                                        return
-                                                    }
-                                                    parent.value -= 0.1
-                                                    if(parent.value <= 0) {
-                                                        parent.value = 0
-                                                    }
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                visible: index == 0
-                                                x: 0
-                                                y: vertical ? 0 : -7
-                                                width: 2
-                                                height: 20
-                                                opacity: 0.8
-                                                color: root.inactive && !content.working ? COMMON.fg3 : COMMON.accent(0.0, 0.7, 0.4)
-                                            }
-                                        }
-                                    }
+                                    id: underlays
+                                    anchors.fill: textArea
+                                    clip: true
+                                    
                                 }
 
                                 TabTextArea {
@@ -462,6 +372,10 @@ Rectangle {
                                     area.leftPadding: 12
                                     area.rightPadding: 12
                                     area.selectionColor: root.inactive ? COMMON.accent(0, 0.0, 0.4) : COMMON.accent(0, 0.7, 0.7)
+
+                                    tab: modelData
+                                    inactive: root.inactive
+                                    working: content.working
 
                                     function clean(text) {
                                         return modelData.clean(text)
@@ -474,39 +388,31 @@ Rectangle {
 
 
                                     Timer {
-                                        id: checkTimer
+                                        id: alignTimer
                                         interval: 1
                                         onTriggered: {
-                                            textArea.check()
+                                            textArea.align()
                                             textArea.area.cursorVisible = true
                                         }
                                     }
 
-                                    function check() {
-                                        // U+00AD has width at newlines, fix the alignment difference
-                                        if(modelData.marker == -1) {
-                                            return
+                                    Timer {
+                                        id: spellTimer
+                                        interval: 500
+                                        onTriggered: {
+                                            modelData.spellchecker.check()
                                         }
-                                        if(modelData.marker + 1 != textArea.area.cursorPosition) {
-                                            return
-                                        }
+                                    }
 
-                                        var p = textArea.area.cursorRectangle
-
-                                        if(p.x != marker.position.x) {
+                                    function align() {
+                                        // sync marker and cursor alignment when they are visibly in the same spot
+                                        if(modelData.marker != -1 && modelData.marker + 1 == textArea.area.cursorPosition) {
                                             textArea.area.cursorPosition -= 1
                                         }
                                     }
 
                                     function layout() {
-                                        if(modelData.marker != -1) {
-                                            if(area.length >= modelData.marker) {
-                                                marker.position = textArea.getPositionRectangle(modelData.marker)
-                                            }
-                                        } else {
-                                            marker.position = textArea.getPositionRectangle(textArea.area.text.length)
-                                        }
-                                        last.layout()
+                                        marker.layout()
                                     }
 
                                     property var setCursor: null
@@ -525,8 +431,11 @@ Rectangle {
                                                 area.insert(area.cursorPosition, "\u00AD")
                                             }
                                         }
+
+                                        modelData.spellchecker.update(area.text)
+                                        spellTimer.restart()
                                         layout()
-                                        return                               
+                                        return
                                     }
 
                                     area.onTextChanged: {
@@ -545,7 +454,7 @@ Rectangle {
                                         textArea.area.cursorVisible = false
                                         // on keyboard input the cursor position changes before text changes
                                         // need to wait an instant
-                                        checkTimer.start()
+                                        alignTimer.start()
                                     }
 
                                     Connections {
@@ -611,7 +520,7 @@ Rectangle {
 
                                         function onContentChanged() {
                                             if(modelData.content != textArea.text) {
-                                                console.log("CHANGED")
+                                                console.log("DESYNC")
                                                 textArea.text = modelData.content
                                             }
                                         }
@@ -639,108 +548,18 @@ Rectangle {
                                             }
                                         }
                                     }
+                                }
 
-                                    Rectangle {
+                                Item {
+                                    id: overlays
+                                    anchors.fill: textArea
+                                    clip: true
+                                    MarkerOverlay {
                                         id: marker
-                                        property var position: Qt.rect(0,0,0,0)
-                                        x: horizontal ? position.x+2 : position.x-1
-                                        y: horizontal ? position.y + position.height - 5 : position.y
-                                        width: horizontal ? 10 : 2
-                                        height: horizontal ? 2 : position.height
-                                        visible: height != 0
-
-                                        property var horizontal: modelData.marker == -1
-
-                                        color: {
-                                            if(false && modelData.marker != -1) {
-                                                if(modelData.marker == textArea.area.cursorPosition || modelData.marker == textArea.area.cursorPosition-1) {
-                                                    return COMMON.fg1
-                                                }
-                                            }
-                                            return root.inactive && !content.working ? COMMON.fg2 : COMMON.accent(0, 0.8)
-                                        }
-
-                                        opacity: markerMouseArea.active || root.inactive ? 0.8 : blink
-
-                                        MouseArea {
-                                            id: markerMouseArea
-                                            anchors.fill: parent
-                                            anchors.leftMargin: -5
-                                            anchors.rightMargin: -5
-                                            hoverEnabled: true
-                                            visible: false
-
-                                            property var active: containsMouse || dragging
-                                            property var dragging: false
-                                            property var startPosition: Qt.point(0,0)
-                                            property var markerStartPosition: Qt.point(0,0)
-
-                                            onPressed: {
-                                                startPosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                                markerStartPosition = textArea.area.mapFromItem(textArea, Qt.point(marker.position.x, marker.position.y))
-
-                                                if(modelData.marker != -1) {
-                                                    textArea.area.cursorPosition = modelData.marker
-                                                } else {
-                                                    textArea.area.cursorPosition = textArea.area.text.length
-                                                }
-                                            }
-
-                                            onReleased: {
-                                                dragging = false
-                                            }
-
-                                            Timer {
-                                                id: cooldown
-                                                interval: 10
-                                            }
-
-                                            onPositionChanged: {
-                                                var mousePosition = textArea.area.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                                if(pressedButtons & Qt.LeftButton) {
-                                                    var delta = Qt.point(mousePosition.x-startPosition.x, mousePosition.y-startPosition.y)
-                                                    if(!dragging) {
-                                                        if(Math.pow(delta.x*delta.x + delta.y*delta.y, 0.5) > 5) {
-                                                            dragging = true
-                                                        }
-                                                    } else {
-                                                        if(!cooldown.running) {
-                                                            var boxPosition = textArea.mapFromItem(markerMouseArea, Qt.point(mouse.x, mouse.y))
-                                                            if(boxPosition.y < 0) {
-                                                                textArea.scrollBar.decrease()
-                                                                cooldown.start()
-                                                            } else if (boxPosition.y > textArea.height) {
-                                                                textArea.scrollBar.increase()
-                                                                cooldown.start()
-                                                            }
-                                                        }
-
-                                                        var x = Math.floor(markerStartPosition.x + delta.x)
-                                                        var dy = Math.floor(delta.y/marker.height) * marker.height
-                                                        var y = Math.floor(markerStartPosition.y + dy + marker.height/2)
-                                                        var p = textArea.area.positionAt(x, y)
-
-                                                        if(p != modelData.marker) {
-                                                            //modelData.moveMarker(p)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        property var blink: 0.8
-
-                                        NumberAnimation on blink {
-                                            id: animation;
-                                            from: 1.0
-                                            to: 0.2
-                                            duration: GUI.isGenerating ? 500 : 1000
-                                            loops: Animation.Infinite
-                                            running: true
-                                            onDurationChanged: {
-                                                restart()
-                                            }
-                                        }
+                                        tab: modelData
+                                        textArea: textArea
+                                        inactive: root.inactive
+                                        working: content.working
                                     }
                                 }
 

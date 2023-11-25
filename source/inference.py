@@ -147,6 +147,16 @@ class Inference():
                     return
                 self.setStatus("generating")
 
+                prompt = req["data"]["prompt"]
+                n_ctx = self.llm._n_ctx
+                n_req = req["data"]["max_tokens"]
+                if prompt != "":
+                    prompt_tokens = self.llm.tokenize(prompt.encode("utf-8"))
+                    if len(prompt_tokens) + n_req > n_ctx:
+                        prompt_tokens = prompt_tokens[-(n_ctx-n_req):]
+                        prompt = self.llm.detokenize(prompt_tokens).decode("utf-8")
+                        req["data"]["prompt"] = prompt
+                
                 stop = req["data"]["stop_condition"]
                 del req["data"]["stop_condition"]
 

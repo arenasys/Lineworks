@@ -5,6 +5,8 @@ from PyQt5.QtGui import QDrag, QColor, QImage, QSyntaxHighlighter, QColor, QBrus
 from PyQt5.QtQml import qmlRegisterUncreatableType
 from PyQt5.QtQuick import QQuickTextDocument, QQuickImageProvider
 
+import spellcheck
+
 MIME_POSITION = "application/x-lineworks-position"
 MIME_POSITION_AREA = "application/x-lineworks-position-area"
 INVERSE_POSITION = {"T":"B","B":"T","L":"R","R":"L"}
@@ -28,6 +30,7 @@ class TabHighlighter(QSyntaxHighlighter):
         return
 
 class Tab(QObject):
+    updated = pyqtSignal()
     nameUpdated = pyqtSignal()
     contentUpdated = pyqtSignal()
     markerUpdated = pyqtSignal()
@@ -43,6 +46,7 @@ class Tab(QObject):
         self._name = name
         self._content = "Hello World!"
         self._highlighter = TabHighlighter(self)
+        self._spellchecker = spellcheck.Spellchecker(self.gui._dictionary, self)
         self._marker = -1
 
         self._last = ""
@@ -58,6 +62,10 @@ class Tab(QObject):
             self._name = name
             self.nameUpdated.emit()
     
+    @pyqtProperty(spellcheck.Spellchecker, notify=updated)
+    def spellchecker(self):
+        return self._spellchecker
+
     @pyqtProperty(str, notify=contentUpdated)
     def initial(self):
         context = self.context()

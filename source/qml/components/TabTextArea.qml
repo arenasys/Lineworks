@@ -17,12 +17,23 @@ Rectangle {
     property alias control: control
     property alias scrollBar: controlScrollBar
 
+    property alias spelling: spelling
+    property alias stream: stream
+    property var tab
+    property var inactive
+    property var working
+
     property var lock: false
     property var moving: false
 
     function getPositionRectangle(position) {
         var rect = textArea.positionToRectangle(position)
         return root.mapFromItem(textArea, rect)
+    }
+
+    function getPositionRectangleInternal(position) {
+        var rect = textArea.positionToRectangle(position)
+        return rect
     }
 
     function ensureVisible(position) {
@@ -44,6 +55,11 @@ Rectangle {
 
     function layout() {
         return
+    }
+    
+    function overlay() {
+        stream.layout()
+        spelling.layout()
     }
 
     function clean(text) {
@@ -111,6 +127,7 @@ Rectangle {
         }
 
         onContentWidthChanged: {
+            root.overlay()
             root.layout()
         }
 
@@ -161,6 +178,15 @@ Rectangle {
             anchors.rightMargin: 6
             visible: control.height < control.contentHeight
             color: COMMON.bg4
+        }
+
+        StreamOverlay {
+            anchors.fill: textArea
+            id: stream
+            tab: root.tab
+            textArea: root
+            inactive: root.inactive
+            working: root.working
         }
 
         TextArea {
@@ -266,6 +292,19 @@ Rectangle {
                     bar.decrease()
                 }
                 bar.stepSize = bar.line
+            }
+        }
+
+
+        SpellingOverlay {
+            anchors.fill: textArea
+            id: spelling
+            tab: root.tab
+            textArea: root
+
+            function replace(start,end,text) {
+                textArea.remove(start,end)
+                textArea.insert(start,text)
             }
         }
 

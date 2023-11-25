@@ -20,6 +20,7 @@ import misc
 import git
 import tabs
 from tabs import Tab, TabArea
+import spellcheck
 
 SOURCE_REPO = "https://github.com/arenasys/lineworks"
 DEFAULT_PRESETS = {
@@ -50,7 +51,6 @@ class HistoryEntry(QObject):
         self._output = ""
         self._time = 0
         self._index = 0
-        self._folder = ""
 
     @pyqtProperty(str, notify=updated)
     def label(self):
@@ -100,7 +100,6 @@ class HistoryEntry(QObject):
             "output": self._output,
             "time": self._time,
             "index": self._index,
-            "folder": self._folder,
             "trailing": self._trailing,
             "gen": copy.deepcopy(self._parameters),
             "model": copy.deepcopy(self._model)
@@ -112,7 +111,6 @@ class HistoryEntry(QObject):
         self._output = data["output"]
         self._time = data["time"]
         self._index = data["index"]
-        self._folder = data["folder"]
         self._trailing = data["trailing"]
         self._parameters = copy.deepcopy(data["gen"])
         self._model = copy.deepcopy(data["model"])
@@ -176,6 +174,8 @@ class GUI(QObject):
         self._recent = []
 
         self.initConfig()
+
+        self._dictionary = spellcheck.Dictionary()
 
         self._tabs = tabs.Tabs(self)
 

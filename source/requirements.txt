@@ -6,3 +6,5 @@ pygit2==1.12.1
 websockets==11.0.3
 bson==0.5.10
 cryptography==40.0.2
+requests==2.31.0
+hunspell==0.5.5
