@@ -30,7 +30,18 @@ class Dictionary():
         self.populator = Populator(self)
         self.populator.start()
         
+        self.added = []
         self.cache = collections.OrderedDict()
+    
+    def filterSuggestions(self, suggestions):
+        out = []
+        for s in suggestions:
+            if len(s) > 3 and s[-2] == " ":
+                continue
+            out += [s]
+            if len(out) == 5:
+                break
+        return out
 
     def lookupCache(self, term):
         suggestions = None
@@ -43,6 +54,7 @@ class Dictionary():
 
         if not self.spell.spell(term):
             suggestions = self.spell.suggest(term)
+            suggestions = self.filterSuggestions(suggestions)
 
         self.cache[term] = suggestions
         if len(self.cache) > 10240:
@@ -64,13 +76,37 @@ class Dictionary():
         self.populator.push([term])
         return None
     
-    def add(self, word):
-        self.spell.add(word)
+    def add(self, word, affix=None):
+        if "/" in word:
+            return False
+
+        if not word:
+            return False
+
+        if self.spell.spell(word):
+            return False
+
+        if affix == None and word[0].isupper():
+            affix = "S"
+        
+        if affix != None:
+            self.spell.add_with_affix(word, affix)
+            self.added += [word + "/" + affix]
+        else:
+            self.spell.add(word)
+            self.added += [word]
+
+        for c in list(self.cache.keys()):
+            if word.lower() in c.lower():
+                del self.cache[c]
+
+        return True
 
 class Populator(QThread):
     def __init__(self, dictionary):
         super().__init__()
         self.words = set()
+        self.adding = []
         self.dictionary = dictionary
         self.stopping = False
 
@@ -79,11 +115,22 @@ class Populator(QThread):
             if not word in self.words:
                 self.words.add(word)
 
+    def add(self, words):
+        self.adding = words
+
     def stop(self):
         self.running = False
 
     def run(self):
         while not self.stopping:
+            if self.adding:
+                for word in self.adding:
+                    if "/" in word:
+                        word, affix = word.split("/")
+                        self.dictionary.add(word, affix)
+                    else:
+                        self.dictionary.add(word)
+
             word = None
             if len(self.words) != 0:
                 word = self.words.pop()
@@ -217,6 +264,11 @@ class Line(QObject):
 
         return missing
 
+    def clear(self, text):
+        for word in self._words:
+            if text.lower() in word.text.lower():
+                word.incorrect = None
+
     def __repr__(self) -> str:
         return f"[{', '.join([str(w) for w in self._words])}, {self.start}]"
 
@@ -276,6 +328,15 @@ class Spellchecker(QObject):
     @pyqtSlot(str, result=list)
     def getSuggestions(self, text):
         return self.dictionary.lookup(text)
+
+
+    @pyqtSlot(str, result=bool)
+    def addWord(self, word):
+        if self.dictionary.add(word):
+            for line in self._lines:
+                line.clear(word)
+            return True
+        return False
 
     @pyqtSlot(result=bool)
     def check(self):

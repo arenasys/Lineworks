@@ -20,6 +20,10 @@ Item {
         return
     }
 
+    function recheck() {
+        return
+    }
+
     Repeater {
         model: ArrayModel {
             source: tab.spellchecker.lines
@@ -210,6 +214,7 @@ Item {
                             suggestionMenu.model = tab.spellchecker.getSuggestions(modelData.word)
                             suggestionMenu.start = span.x + line.span.x
                             suggestionMenu.end = span.y + line.span.x
+                            suggestionMenu.word = modelData.word
                             suggestionMenu.popup()
                         }
                     }
@@ -220,6 +225,7 @@ Item {
 
     SContextMenu {
         id: suggestionMenu
+        property var word: ""
         property var start: 0
         property var end: 0
         property var model: []
@@ -241,6 +247,12 @@ Item {
 
         SContextMenuItem {
             text: "Add to dictionary"
+
+            onPressed: {
+                if(tab.spellchecker.addWord(suggestionMenu.word)) {
+                    spelling.recheck()
+                }
+            }
         }
     }
 }

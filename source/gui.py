@@ -764,7 +764,8 @@ class GUI(QObject):
             "model": model,
             "stop": stop,
             "areas": self._tabs.toJSON(),
-            "history": [entry.toJSON() for entry in self._history.values()]
+            "history": [entry.toJSON() for entry in self._history.values()],
+            "vocabulary": self._dictionary.added
         }
         return data
     
@@ -787,6 +788,9 @@ class GUI(QObject):
         
         for k,v in data["stop"].items():
             self._stop_parameters.set(k,v)
+
+        if "vocabulary" in data:
+            self._dictionary.populator.add(data["vocabulary"])
 
         self.historyFromJSON(data["history"])
         self.tabsFromJSON(data["areas"])
