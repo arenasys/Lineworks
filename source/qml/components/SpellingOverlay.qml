@@ -20,22 +20,8 @@ Item {
         return
     }
 
-    Connections {
-        target: tab.spellchecker
-
-        function onInsert(i, word) {
-            words.insert(i, {"data":word})
-        }
-
-        function onRemove(i) {
-            words.remove(i)
-        }
-    }
-
     Repeater {
-        model: ListModel {
-            id: words
-        }
+        model: tab.spellchecker
         
         Item {
             id: word

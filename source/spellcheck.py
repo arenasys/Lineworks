@@ -4,7 +4,7 @@ import os
 import collections
 import difflib
 
-from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, Qt, QObject, QPoint
+from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, Qt, QObject, QPoint, QAbstractListModel, QModelIndex, QVariant, QByteArray
 from PyQt5.QtQml import qmlRegisterUncreatableType
 
 WORD_RE = re.compile(r"\b[a-zA-Z-'’]+\b")
@@ -76,18 +76,28 @@ class Word(QObject):
             if self.results:
                 self.updated.emit()
 
-class Spellchecker(QObject):
-    insert = pyqtSignal(int, Word)
-    remove = pyqtSignal(int)
-
+class Spellchecker(QAbstractListModel):
     def __init__(self, dictionary, parent):
         super().__init__(parent)
         self.text = ""
         self.words = []
         self.dictionary = dictionary
+
+    def data(self, index, role):
+        value = QVariant()
+        row = index.row()
+        if row < len(self.words):
+            value = self.words[row]
+        return value
+    
+    def rowCount(self, parent):
+        return len(self.words)
+
+    def roleNames(self):
+        return {Qt.UserRole: QByteArray(("modelData").encode("utf-8"))}
     
     @pyqtSlot(str)
-    def update(self, text):        
+    def update(self, text):
         new_words = []
         text = text.replace(chr(MARK), '')
 
@@ -107,12 +117,14 @@ class Spellchecker(QObject):
         i = 0
         for d in diff:
             if d[0] == "+":
+                self.beginInsertRows(QModelIndex(), i, i)
                 self.words.insert(i, new_words[i])
-                self.insert.emit(i, new_words[i])
+                self.endInsertRows()
                 i += 1
             elif d[0] == "-":
+                self.beginRemoveRows(QModelIndex(), i, i)
                 self.words.pop(i)
-                self.remove.emit(i)
+                self.endRemoveRows()
             elif d[0] == " ":
                 self.words[i].move(new_words[i].start)
                 i += 1
@@ -127,8 +139,3 @@ class Spellchecker(QObject):
 def registerTypes():
     qmlRegisterUncreatableType(Word, "gui", 1, 0, "Word", "Not a QML type")
     qmlRegisterUncreatableType(Spellchecker, "gui", 1, 0, "Spellchecker", "Not a QML type")
-
-if __name__ == "__main__":
-    s = Spellchecker()
-    s.update("Hello")
-    s.update("A Hello, 3904 World!")
