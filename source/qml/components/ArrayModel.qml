@@ -1,10 +1,12 @@
 import QtQuick 2.15
 
 ListModel {
+    id: root
     property var source
     property var current: []
     property var unique: false // avoids object destruction/recreation, requires all object to be unique, slower
     property var debug: false
+    property var inert: false
 
     function doAppend(obj) {
         if(debug) {
@@ -189,10 +191,16 @@ ListModel {
     }
 
     onSourceChanged: {
+        if(inert) {
+            return
+        }
         sync()
     }
 
     Component.onCompleted: {
+        if(inert) {
+            return
+        }
         sync()
     }
 }

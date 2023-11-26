@@ -2,12 +2,18 @@ import hunspell
 import re
 import os
 import collections
-import difflib
+import time
 
-from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, Qt, QObject, QPoint, QAbstractListModel, QModelIndex, QVariant, QByteArray
+from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, Qt, QObject, QPoint, QThread, QRunnable, QMutex, QReadWriteLock, QThreadPool
 from PyQt5.QtQml import qmlRegisterUncreatableType
 
-WORD_RE = re.compile(r"\b[a-zA-Z-'’]+\b")
+from cdifflib import CSequenceMatcher
+import difflib
+difflib.SequenceMatcher = CSequenceMatcher
+
+
+WORD_RE = re.compile(r"\w+")
+LINE_RE = re.compile(r".+\n*")
 DICT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dictionary")
 CACHE_SIZE = 10240
 MARK = 0x00AD
@@ -20,122 +26,266 @@ class Dictionary():
         self.spell = None
         if os.path.exists(dic_f) and os.path.exists(aff_f):
             self.spell = hunspell.HunSpell(dic_f, aff_f)
+
+        self.populator = Populator(self)
+        self.populator.start()
         
         self.cache = collections.OrderedDict()
-    
-    def lookup(self, term):
-        if not self.spell:
-            return None
 
-        if len(term) > 15:
-            return None
-
-        if term in self.cache:
-            return self.cache[term]
-        
+    def lookupCache(self, term):
         suggestions = None
+        if term in self.cache:
+            suggestions = self.cache[term]
+        return suggestions
+    
+    def lookupDictionary(self, term):
+        suggestions = []
 
         if not self.spell.spell(term):
             suggestions = self.spell.suggest(term)
-        
+
         self.cache[term] = suggestions
         if len(self.cache) > 10240:
             self.cache.popitem(0)
 
         return suggestions
     
+    def lookup(self, term):
+        if not self.spell:
+            return []
+
+        if len(term) > 15:
+            return []
+
+        suggestions = self.lookupCache(term)
+        if suggestions != None:
+            return suggestions
+        
+        self.populator.push([term])
+        return None
+    
     def add(self, word):
         self.spell.add(word)
 
+class Populator(QThread):
+    def __init__(self, dictionary):
+        super().__init__()
+        self.words = set()
+        self.dictionary = dictionary
+        self.stopping = False
+
+    def push(self, words):
+        for word in words:
+            if not word in self.words:
+                self.words.add(word)
+
+    def stop(self):
+        self.running = False
+
+    def run(self):
+        while not self.stopping:
+            word = None
+            if len(self.words) != 0:
+                word = self.words.pop()
+            
+            if word:
+                if not word in self.dictionary.cache:
+                    self.dictionary.lookupDictionary(word)
+            else:
+                QThread.msleep(1)
+
 class Word(QObject):
     updated = pyqtSignal()
+    spanUpdated = pyqtSignal()
     def __init__(self, text, start, parent):
         super().__init__(parent)
         self.text = text
         self.start = start
-        self.results = []
+        self.incorrect = None
 
-    @pyqtProperty(QPoint, notify=updated)
+    @pyqtProperty(str, notify=updated)
+    def word(self):
+        return self.text
+    
+    @pyqtProperty(QPoint, notify=spanUpdated)
     def span(self):
         return QPoint(self.start, self.start+len(self.text))
-    
-    @pyqtProperty(list, notify=updated)
-    def suggestions(self):
-        if self.results:
-            return self.results
-        return []
     
     def move(self, start):
         if start != self.start:
             self.start = start
-            self.updated.emit()
+            self.spanUpdated.emit()
 
-    def check(self, dict):
-        if not self.results:
-            self.results = dict.lookup(self.text)
-            if self.results:
-                self.updated.emit()
-
-class Spellchecker(QAbstractListModel):
-    def __init__(self, dictionary, parent):
+    def __repr__(self) -> str:
+        return str((self.text, self.start))
+    
+class Line(QObject):
+    incorrectUpdated = pyqtSignal()
+    spanUpdated = pyqtSignal()
+    def __init__(self, text, start, parent):
         super().__init__(parent)
-        self.text = ""
-        self.words = []
-        self.dictionary = dictionary
+        self.text = text
+        self.start = start
+        self._words = []
+        self._incorrect = []
 
-    def data(self, index, role):
-        value = QVariant()
-        row = index.row()
-        if row < len(self.words):
-            value = self.words[row]
-        return value
-    
-    def rowCount(self, parent):
-        return len(self.words)
+        self.update(text)
 
-    def roleNames(self):
-        return {Qt.UserRole: QByteArray(("modelData").encode("utf-8"))}
+    @pyqtProperty(list, notify=incorrectUpdated)
+    def incorrect(self):
+        return self._incorrect
     
-    @pyqtSlot(str)
-    def update(self, text):
+    @pyqtProperty(QPoint, notify=spanUpdated)
+    def span(self):
+        return QPoint(self.start, self.start+len(self.text.rstrip()))
+
+    def update(self, text, start=None):
         new_words = []
-        text = text.replace(chr(MARK), '')
-
-        if text == self.text:
-            return
+        old_words = [w.text for w in self._words]
 
         for m in WORD_RE.finditer(text):
-            t = m.group()
-            s,e = m.span()
-            new_words += [Word(t,s,self)]
-        
-        new_lines = [w.text for w in new_words]
-        old_lines = [w.text for w in self.words]
+            new_words += [(m.group(), m.span()[0])]
 
-        diff = difflib.ndiff(old_lines, new_lines)
+        word_diff = [str(d)[0] for d in difflib.ndiff(old_words, [l[0] for l in new_words])]
+        word_diff = [d for d in word_diff if d in {' ', '-', '+'}]
 
         i = 0
-        for d in diff:
-            if d[0] == "+":
-                self.beginInsertRows(QModelIndex(), i, i)
-                self.words.insert(i, new_words[i])
-                self.endInsertRows()
+        changed = False
+        for d in word_diff:
+            if d == "+":
+                self._words.insert(i, Word(new_words[i][0], new_words[i][1], self))
+                changed = True
                 i += 1
-            elif d[0] == "-":
-                self.beginRemoveRows(QModelIndex(), i, i)
-                self.words.pop(i)
-                self.endRemoveRows()
-            elif d[0] == " ":
-                self.words[i].move(new_words[i].start)
+            elif d == "-":
+                self._words.pop(i)
+                changed = True
+            elif d == " ":
+                if self._words[i].start != new_words[i][1]:
+                    self._words[i].move(new_words[i][1])
                 i += 1
-
+        
+        if start != None:
+            self.start = start
         self.text = text
+        self.spanUpdated.emit()
+        
+        if changed:
+            self.sync()
+    
+    def move(self, start):
+        if start != self.start:
+            self.start = start
+            self.spanUpdated.emit()
 
-    @pyqtSlot()
+    def sync(self):
+        incorrect = []
+        for word in self._words:
+            if word.incorrect:
+                incorrect += [word]
+
+        if incorrect != self._incorrect:
+            self._incorrect = incorrect
+            self.incorrectUpdated.emit()
+
     def check(self):
-        for word in self.words:
-            word.check(self.dictionary)
+        dictionary = self.parent().dictionary
+
+        missing = False
+        incorrect = []
+
+        start = time.time()
+        for word in self._words:
+            if word.incorrect == None:
+                if time.time()-start < 0.001:
+                    results = dictionary.lookup(word.text)
+                else:
+                    results = None
+                if results == None:
+                    missing = True
+                elif results:
+                    word.incorrect = True
+                else:
+                    word.incorrect = False
+                
+            if word.incorrect:
+                incorrect += [word]
+
+        if not missing and incorrect != self._incorrect:
+            self._incorrect = incorrect
+            self.incorrectUpdated.emit()
+            return missing
+
+        return missing
+
+    def __repr__(self) -> str:
+        return f"[{', '.join([str(w) for w in self._words])}, {self.start}]"
+
+class Spellchecker(QObject):
+    updated = pyqtSignal()
+    def __init__(self, dictionary, parent):
+        super().__init__(parent)
+        self._lines = []
+        self.dictionary = dictionary
+
+    @pyqtProperty(list, notify=updated)
+    def lines(self):
+        return self._lines
+
+    @pyqtSlot(str)
+    def update(self, text):
+        new_lines = []
+        old_lines = [l.text for l in self._lines]
+
+        text = text.replace(chr(MARK), '')
+
+        if text and text[-1] != "\n":
+            text += "\n"
+        
+        for m in LINE_RE.finditer(text):
+            new_lines += [(m.group(), m.span()[0])]
+
+        line_diff = [str(d)[0] for d in difflib.ndiff(old_lines, [l[0] for l in new_lines])]
+        line_diff = [d for d in line_diff if d in {' ', '-', '+'}]
+    
+        i = 0
+        j = 0
+        changed = False
+        while j < len(line_diff):
+            d = line_diff[j]
+            dd = line_diff[j+1] if j+1 < len(line_diff) else ''
+            
+            if d == '-' and dd == '+':
+                self._lines[i].update(new_lines[i][0], new_lines[i][1])
+                i += 1
+                j += 1
+            elif d == "+":
+                self._lines.insert(i, Line(new_lines[i][0], new_lines[i][1], self))
+                changed = True
+                i += 1
+            elif d == "-":
+                self._lines.pop(i)
+                changed = True
+            elif d == " ":
+                self._lines[i].move(new_lines[i][1])
+                i += 1
+            j += 1
+
+        if changed:
+            self.updated.emit()
+
+    @pyqtSlot(str, result=list)
+    def getSuggestions(self, text):
+        return self.dictionary.lookup(text)
+
+    @pyqtSlot(result=bool)
+    def check(self):
+        recheck = False
+        for line in self._lines:
+            r = line.check()
+            recheck = recheck or r
+        return recheck
 
 def registerTypes():
     qmlRegisterUncreatableType(Word, "gui", 1, 0, "Word", "Not a QML type")
+    qmlRegisterUncreatableType(Line, "gui", 1, 0, "Line", "Not a QML type")
     qmlRegisterUncreatableType(Spellchecker, "gui", 1, 0, "Spellchecker", "Not a QML type")

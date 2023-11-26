@@ -52,6 +52,14 @@ FocusReleaser {
             anchors.margins: -1
         }
 
+        FPSDisplay {
+            id: fpsItem
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.bottomMargin: 12
+            anchors.leftMargin: 15
+        }
+
         WorkingLine {
             id: saveIndicator
             anchors.left: parent.left

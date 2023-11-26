@@ -397,10 +397,24 @@ Rectangle {
                                     }
 
                                     Timer {
+                                        id: spellRapid
+                                        interval: 20
+                                        repeat: true
+                                        onTriggered: {
+                                            if(!modelData.spellchecker.check()) {
+                                                spellRapid.stop()
+                                            }
+                                        }
+                                    }
+
+
+                                    Timer {
                                         id: spellTimer
                                         interval: 500
                                         onTriggered: {
-                                            modelData.spellchecker.check()
+                                            if(modelData.spellchecker.check()) {
+                                                restart()
+                                            }
                                         }
                                     }
 

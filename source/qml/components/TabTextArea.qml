@@ -27,16 +27,19 @@ Rectangle {
     property var moving: false
 
     function getPositionRectangle(position) {
+        position = Math.max(0, Math.min(textArea.length, position))
         var rect = textArea.positionToRectangle(position)
         return root.mapFromItem(textArea, rect)
     }
 
     function getPositionRectangleInternal(position) {
+        position = Math.max(0, Math.min(textArea.length, position))
         var rect = textArea.positionToRectangle(position)
         return rect
     }
 
     function ensureVisible(position) {
+        position = Math.max(0, Math.min(textArea.length, position))
         if(lock || moving) {
             return;
         }
@@ -301,8 +304,11 @@ Rectangle {
             id: spelling
             tab: root.tab
             textArea: root
+            minY: control.contentY - 20
+            maxY: control.contentY + control.height + 20
 
             function replace(start,end,text) {
+                textArea.cursorPosition = start
                 textArea.remove(start,end)
                 textArea.insert(start,text)
             }

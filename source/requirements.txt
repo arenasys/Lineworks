@@ -8,3 +8,4 @@ bson==0.5.10
 cryptography==40.0.2
 requests==2.31.0
 hunspell==0.5.5
+cdifflib==1.2.6

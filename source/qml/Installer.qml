@@ -41,7 +41,7 @@ FocusReleaser {
             SChoice {
                 id: choice
                 width: 300
-                height: 30
+                height: 25
                 label: "Mode"
                 disabled: COORDINATOR.disable
                 currentIndex: COORDINATOR.mode
@@ -61,6 +61,7 @@ FocusReleaser {
                     anchors.bottomMargin: 0
                     border.color: COMMON.bg4
                     color: "transparent"
+                    
                     ListView {
                         id: packageList
                         anchors.fill: parent
@@ -71,7 +72,34 @@ FocusReleaser {
 
                         ScrollBar.vertical: SScrollBarV {
                             id: scrollBar
+                            parent: packageList
+                            anchors.right: packageList.right
+                            anchors.rightMargin: -2
+                            barWidth: 5
+                            color: COMMON.bg3
+                            hoverColor: COMMON.bg4
+                            pressedColor: COMMON.bg5
                             policy: packageList.contentHeight > packageList.height ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        }
+
+                        Rectangle {
+                            width: 5
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            anchors.rightMargin: 0
+                            color: COMMON.bg0_5
+                            visible: packageList.contentHeight > packageList.height
+                        }
+
+                        Rectangle {
+                            width: 1
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            anchors.rightMargin: 5
+                            color: COMMON.bg4
+                            visible: packageList.contentHeight > packageList.height
                         }
 
                         delegate: Rectangle {
@@ -116,7 +144,7 @@ FocusReleaser {
             SButton {
                 id: button
                 width: 300
-                height: 30
+                height: 25
                 label: COORDINATOR.disable ? "Cancel" : (COORDINATOR.packages.length == 0 ? "Proceed" : "Install")
                 
                 onPressed: {
@@ -143,17 +171,16 @@ FocusReleaser {
                 height: 30
             }
 
-            Rectangle {
+            Item {
                 x: -parent.width
                 width: parent.width*3
                 height: 120
-                border.width: 1
-                border.color: COMMON.bg4
-                color: "transparent"
 
                 STextArea {
                     id: outputArea
                     anchors.fill: parent
+                    anchors.topMargin: 1
+                    anchors.bottomMargin: 1
 
                     area.color: COMMON.fg2
                     pointSize: 9.8
@@ -166,6 +193,13 @@ FocusReleaser {
                             outputArea.area.cursorPosition = outputArea.text.length-1
                         }
                     }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    border.width: 1
+                    border.color: COMMON.bg4
+                    color: "transparent"
                 }
             }
 

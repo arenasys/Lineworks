@@ -137,6 +137,16 @@ Rectangle {
                 source: "qrc:/fonts/SourceCodePro-Regular.ttf"
             }
 
+            onCursorRectangleChanged: {
+                var y = cursorRectangle.y
+                if(y < control.contentY + 5) {
+                    control.contentY = y - 5
+                }
+                if(y >= control.contentY + control.height - 5) {
+                    control.contentY = y - control.height + cursorRectangle.height + 5
+                }
+            }
+
             property var pointSize: 10.8
             property var monospace: false
 
