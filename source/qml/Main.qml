@@ -23,8 +23,9 @@ FocusReleaser {
     
     Component.onCompleted: {
         window.title = Qt.binding(function() { return GUI.title; })
+        COMMON.light = Qt.binding(function() { return GUI.lightMode; })
     }
-
+    
     Rectangle {
         id: root
         anchors.fill: parent

@@ -396,28 +396,6 @@ Rectangle {
                                         }
                                     }
 
-                                    Timer {
-                                        id: spellRapid
-                                        interval: 20
-                                        repeat: true
-                                        onTriggered: {
-                                            if(!modelData.spellchecker.check()) {
-                                                spellRapid.stop()
-                                            }
-                                        }
-                                    }
-
-
-                                    Timer {
-                                        id: spellTimer
-                                        interval: 500
-                                        onTriggered: {
-                                            if(modelData.spellchecker.check()) {
-                                                restart()
-                                            }
-                                        }
-                                    }
-
                                     function align() {
                                         // sync marker and cursor alignment when they are visibly in the same spot
                                         if(modelData.marker != -1 && modelData.marker + 1 == textArea.area.cursorPosition) {
@@ -427,7 +405,7 @@ Rectangle {
 
                                     function layout() {
                                         marker.layout()
-                                        textArea.stream.layout()
+                                        textArea.stream.update()
                                     }
 
                                     property var setCursor: null
@@ -446,9 +424,8 @@ Rectangle {
                                                 area.insert(area.cursorPosition, "\u00AD")
                                             }
                                         }
-
-                                        modelData.spellchecker.update(area.text)
-                                        spellTimer.restart()
+                                        
+                                        textArea.spelling.update()
                                         layout()
                                         return
                                     }

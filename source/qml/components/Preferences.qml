@@ -190,13 +190,33 @@ SDialog {
                         topPadding: 95
 
                         SChoice {
+                            id: colorScheme
                             label: "Color scheme"
                             model: ["Dark", "Light"]
                             width: parent.width
                             height: 25
 
+                            property var ready: false
+
                             onValueChanged: {
-                                COMMON.light = value == "Light"
+                                if(ready) {
+                                    GUI.lightMode = value == "Light"
+                                }
+                            }
+
+                            Component.onCompleted: {
+                                currentIndex = GUI.lightMode ? 1 : 0
+                                ready = true
+                            }
+
+                            Connections {
+                                target: GUI
+                                function onLightModeChanged() {
+                                    var val = GUI.lightMode ? "Light" : "Dark"
+                                    if(colorScheme.value != val) {
+                                        colorScheme.value = val
+                                    }
+                                }
                             }
                         }
                     }

@@ -363,7 +363,7 @@ class Coordinator(QObject):
         
     @pyqtSlot()
     def done(self):
-        start(self.engine, self.app)
+        start(self.engine, self.app, self._mode)
         self.proceed.emit()
 
     @pyqtSlot()
@@ -467,7 +467,7 @@ def ready():
     qmlRegisterSingletonType(QUrl("qrc:/Common.qml"), "gui", 1, 0, "COMMON")
     misc.registerTypes()
 
-def start(engine, app):
+def start(engine, app, mode):
     import gui
     import sql
     import tabs
@@ -478,7 +478,7 @@ def start(engine, app):
     tabs.registerTypes()
     gui.registerTypes()
 
-    backend = gui.GUI(parent=app)
+    backend = gui.GUI(parent=app, mode=mode)
 
     qmlRegisterSingletonType(gui.GUI, "gui", 1, 0, "GUI", lambda qml, js: backend)
 

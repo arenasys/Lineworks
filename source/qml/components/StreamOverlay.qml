@@ -7,12 +7,22 @@ import "../style"
 
 Item {
     id: stream
+    visible: GUI.streamOverlay
+
     signal layout()
 
     property var tab
     property var textArea
     property var inactive
     property var working
+
+    onVisibleChanged: {
+        update()
+    }
+
+    function update() {
+        layout()
+    }
 
     Repeater {
         model: ArrayModel {
@@ -58,12 +68,10 @@ Item {
             Connections {
                 target: stream
                 function onLayout() {
-                    layout()
+                    if(stream.visible) {
+                        layout()
+                    }
                 }
-            }
-
-            Component.onCompleted: {
-                layout()
             }
 
             property var position: Qt.rect(0,0,0,0)
@@ -84,6 +92,10 @@ Item {
                 repeat: true
                 interval: 50
                 onTriggered: {
+                    if(!stream.visible) {
+                        return
+                    }
+
                     if(index == indicators.count-1 && stream.working) {
                         return
                     }

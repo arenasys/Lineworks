@@ -329,6 +329,7 @@ SMenuBar {
         title: "View"
         width: 200
         clipShadow: true
+
         SMenuItem {
             text: "Next Tab"
             shortcut: "Alt+Right"
@@ -408,6 +409,32 @@ SMenuBar {
             global: true
             onPressed: {
                 GUI.tabs.prevArea()
+            }
+        }
+
+        SMenuSeparator { }
+
+        SMenu {
+            title: "Overlays..."
+
+            SMenuItem {
+                text: "Spell checker"
+                checkable: true
+                checked: GUI.spellOverlay
+                onCheckedChanged: {
+                    GUI.spellOverlay = checked
+                    checked = Qt.binding(function () { return GUI.spellOverlay; })
+                }
+            }
+
+            SMenuItem {
+                text: "Output stream"
+                checkable: true
+                checked: GUI.streamOverlay
+                onCheckedChanged: {
+                    GUI.streamOverlay = checked
+                    checked = Qt.binding(function () { return GUI.streamOverlay; })
+                }
             }
         }
     }

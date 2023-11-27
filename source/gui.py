@@ -22,14 +22,20 @@ import tabs
 from tabs import Tab, TabArea
 import spellcheck
 
-SOURCE_REPO = "https://github.com/arenasys/lineworks"
+SOURCE_REPO = "https://github.com/arenasys/Lineworks"
 DEFAULT_PRESETS = {
     "Simple": {
         "temperature": 0.7,
         "top_p": 0.9,
         "top_k": 20,
         "repeat_penalty": 1.15
-    }
+    },
+    #"Storywrite": {
+    #    "temperature": 0.9,
+    #    "top_p": 0.7,
+    #    "top_k": 100,
+    #    "repeat_penalty": 1.05
+    #}
 }
 
 class Update(QThread):
@@ -120,13 +126,14 @@ class GUI(QObject):
     updated = pyqtSignal()
     workingUpdated = pyqtSignal()
     historyUpdated = pyqtSignal()
+    settingsUpdated = pyqtSignal()
 
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
     clear = pyqtSignal()
     saving = pyqtSignal()
 
-    def __init__(self, parent):
+    def __init__(self, parent, mode):
         super().__init__(parent)
 
         self._gen_config = copy.deepcopy(DEFAULT_PRESETS)
@@ -173,6 +180,11 @@ class GUI(QObject):
         self._file = None
         self._recent = []
 
+        self._spell_overlay = True
+        self._stream_overlay = True
+        self._light_mode = False
+        self._mode = mode
+
         self.initConfig()
 
         self._dictionary = spellcheck.Dictionary()
@@ -215,7 +227,7 @@ class GUI(QObject):
     @pyqtProperty(list, notify=updated)
     def recent(self):
         return self._recent
-
+    
     @pyqtProperty(tabs.Tabs, notify=updated)
     def tabs(self):
         return self._tabs   
@@ -724,7 +736,13 @@ class GUI(QObject):
         config = {
             "models":  self._model_config,
             "presets": self._gen_config,
-            "recent": self._recent
+            "recent": self._recent,
+            "settings": {
+                "spell_overlay": self._spell_overlay,
+                "stream_overlay": self._stream_overlay,
+                "light_mode": self._light_mode
+            },
+            "mode": self._mode
         }
         try:
             with open("config.json", 'w', encoding="utf-8") as f:
@@ -750,10 +768,21 @@ class GUI(QObject):
 
         self._model_config = config.get("models", {})
         self._gen_config = config.get("presets", {})
+
+        for k in DEFAULT_PRESETS:
+            if not k in self._gen_config:
+                self._gen_config[k] = DEFAULT_PRESETS[k]
+
         presets = list(self._gen_config.keys())
         self._gen_presets.set("presets", presets)
         if presets and not self._gen_presets.get("preset") in presets:
             self._gen_presets.set("preset", presets[0])
+
+        settings = config.get("settings", {})
+        self._spell_overlay = settings.get("spell_overlay", self._spell_overlay)
+        self._stream_overlay = settings.get("stream_overlay", self._stream_overlay)
+        self._light_mode = settings.get("light_mode", self._light_mode)
+        self.settingsUpdated.emit()
 
     def toJSON(self):
         model = copy.deepcopy(self._model_parameters._map)
@@ -891,6 +920,39 @@ class GUI(QObject):
     @pyqtSlot()
     def setMarker(self):
         self._tabs.currentTab().setMarker()
+
+    @pyqtProperty(bool, notify=settingsUpdated)
+    def lightMode(self):
+        return self._light_mode
     
+    @lightMode.setter
+    def lightMode(self, value):
+        if value != self._light_mode:
+            self._light_mode = value
+            self.settingsUpdated.emit()
+            self.saveConfig()
+    
+    @pyqtProperty(bool, notify=settingsUpdated)
+    def spellOverlay(self):
+        return self._spell_overlay
+    
+    @spellOverlay.setter
+    def spellOverlay(self, value):
+        if value != self._spell_overlay:
+            self._spell_overlay = value
+            self.settingsUpdated.emit()
+            self.saveConfig()
+
+    @pyqtProperty(bool, notify=settingsUpdated)
+    def streamOverlay(self):
+        return self._stream_overlay
+    
+    @streamOverlay.setter
+    def streamOverlay(self, value):
+        if value != self._stream_overlay:
+            self._stream_overlay = value
+            self.settingsUpdated.emit()
+            self.saveConfig()
+
 def registerTypes():
     qmlRegisterUncreatableType(HistoryEntry, "gui", 1, 0, "HistoryEntry", "Not a QML type")

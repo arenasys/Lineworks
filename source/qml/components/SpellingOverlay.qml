@@ -7,6 +7,7 @@ import "../style"
 
 Item {
     id: spelling
+    visible: GUI.spellOverlay
 
     signal layout()
 
@@ -22,6 +23,27 @@ Item {
 
     function recheck() {
         return
+    }
+
+    Timer {
+        id: checkTimer
+        interval: 500
+        onTriggered: {
+            if(tab.spellchecker.check()) {
+                restart()
+            }
+        }
+    }
+
+    onVisibleChanged: {
+        update()
+    }
+
+    function update() {
+        if(visible) {
+            tab.spellchecker.update(textArea.area.text)
+            checkTimer.restart()
+        }
     }
 
     Repeater {
