@@ -742,6 +742,12 @@ class GUI(QObject):
             return
         
         self._recent = config.get("recent", [])
+        recent_valid = []
+        for f in self._recent:
+            if os.path.exists(f):
+                recent_valid += [f]
+        self._recent = recent_valid
+
         self._model_config = config.get("models", {})
         self._gen_config = config.get("presets", {})
         presets = list(self._gen_config.keys())
@@ -764,7 +770,6 @@ class GUI(QObject):
             "model": model,
             "stop": stop,
             "areas": self._tabs.toJSON(),
-            "history": [entry.toJSON() for entry in self._history.values()],
             "vocabulary": self._dictionary.added
         }
         return data
@@ -792,7 +797,6 @@ class GUI(QObject):
         if "vocabulary" in data:
             self._dictionary.populator.add(data["vocabulary"])
 
-        self.historyFromJSON(data["history"])
         self.tabsFromJSON(data["areas"])
 
     def historyFromJSON(self, data):
