@@ -124,7 +124,7 @@ class GUI(QObject):
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
     clear = pyqtSignal()
-    autosaving = pyqtSignal()
+    saving = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -815,7 +815,10 @@ class GUI(QObject):
                 area.addTab(tab)
             self._tabs.addArea(area)
 
-    def doSave(self, file):
+    def doSave(self, file, indicate=True):
+        if indicate:
+            self.saving.emit()
+
         self._file = file
         if not file in self._recent:
             self._recent = [file] + self._recent
@@ -841,7 +844,6 @@ class GUI(QObject):
     @pyqtSlot()
     def autosave(self):
         if self._file:
-            self.autosaving.emit()
             self.doSave(self._file)
 
     def doOpen(self, file):

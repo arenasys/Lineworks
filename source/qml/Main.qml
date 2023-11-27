@@ -66,13 +66,13 @@ FocusReleaser {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.topMargin: 1
-            height: 1
+            height: 2
             visible: false
             advance: 0.05
 
             Connections {
                 target: GUI
-                function onAutosaving() {
+                function onSaving() {
                     saveIndicator.visible = true
                     saveIndicatorTimer.start()
                 }
