@@ -196,6 +196,15 @@ Rectangle {
             working: root.working
         }
 
+        Rectangle {
+            anchors.fill: textArea
+            color: "transparent"
+            border.color: "red"
+            border.width: 1
+            anchors.margins: 10
+            visible: false// textArea.activeFocus
+        }
+
         TextArea {
             id: textArea
             width: parent.width

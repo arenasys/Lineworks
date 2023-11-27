@@ -441,6 +441,17 @@ Item {
                 color: COMMON.fg0
                 horizontalAlignment: Text.AlignRight
                 verticalAlignment: Text.AlignVCenter
+
+                Keys.onPressed: {
+                    event.accepted = false
+                    switch(event.key) {
+                    case Qt.Key_Escape:
+                        event.accepted = true
+                        root.forceActiveFocus()
+                        GUI.resetFocus()
+                        break
+                    }
+                }
             }
         }
 
@@ -464,7 +475,6 @@ Item {
             width: Math.max(100, control.width+11)
             implicitHeight: Math.min(control.popupHeight, contentItem.implicitHeight+2)
             padding: 2
-            closePolicy: Popup.NoAutoClose
             topInset: -10
             leftInset: -10
             rightInset: -10
@@ -476,6 +486,7 @@ Item {
                     root.enter()
                 } else {
                     root.exit()
+                    GUI.resetFocus()
                 }
             }
 
@@ -544,8 +555,8 @@ Item {
                 root.contextMenu()
             } else {
                 if(cooldown.running) {
-                    valueEditText.forceActiveFocus()
                     control.popup.close()
+                    valueEditText.forceActiveFocus()
                     return
                 }
                 if(!root.readonly) {

@@ -11,7 +11,15 @@ import "components"
 FocusReleaser {
     id: focus
     property var window
-    anchors.fill: parent  
+    anchors.fill: parent
+
+    Timer {
+        interval: 50
+        onTriggered: {
+            GUI.resetFocus()
+        }
+        running: true
+    }
     
     Component.onCompleted: {
         window.title = Qt.binding(function() { return GUI.title; })
@@ -1004,6 +1012,7 @@ FocusReleaser {
                             case Qt.Key_Escape:
                                 searchInput.text = ""
                                 search()
+                                GUI.resetFocus()
                                 break;
                             }
                         }

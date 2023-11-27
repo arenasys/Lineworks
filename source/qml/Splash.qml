@@ -66,4 +66,19 @@ ApplicationWindow {
             }
         }
     }
+
+    Timer {
+        id: startup
+        interval: 50
+        running: true
+    }
+
+    onActiveFocusItemChanged: {
+        if(startup.running) {
+            return
+        }
+        if(activeFocusItem == null || activeFocusItem.toString().includes("ApplicationWindow")) {
+            GUI.resetFocus()
+        }
+    }
 }

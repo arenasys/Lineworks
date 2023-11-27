@@ -427,6 +427,7 @@ Rectangle {
 
                                     function layout() {
                                         marker.layout()
+                                        textArea.stream.layout()
                                     }
 
                                     property var setCursor: null

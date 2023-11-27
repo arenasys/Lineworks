@@ -267,6 +267,8 @@ Item {
                             root.value = value
                         }
                     }
+                    root.forceActiveFocus()
+                    GUI.resetFocus()
                 }
                 onActiveFocusChanged: {
                     if(!activeFocus) {
@@ -286,9 +288,8 @@ Item {
                                     text = root.defaultValue.toFixed(root.precValue) 
                                 }
                             }
-                        default:
-                            event.accepted = false
-                            break;
+                            root.forceActiveFocus()
+                            GUI.resetFocus()
                     }
                 }
 
