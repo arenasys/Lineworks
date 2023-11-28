@@ -59,10 +59,6 @@ Rectangle {
     function layout() {
         return
     }
-
-    function recheck() {
-        return
-    }
     
     function overlay() {
         stream.layout()
@@ -324,10 +320,6 @@ Rectangle {
                 textArea.cursorPosition = start
                 textArea.remove(start,end)
                 textArea.insert(start,text)
-            }
-
-            function recheck() {
-                root.recheck()
             }
         }
 

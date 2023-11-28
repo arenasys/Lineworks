@@ -25,7 +25,7 @@ class Dictionary():
 
         self.spell = None
         if os.path.exists(dic_f) and os.path.exists(aff_f):
-            self.spell = hunspell.HunSpell(dic_f, aff_f)
+            self.spell = hunspell.Hunspell("en_US", hunspell_data_dir=DICT_PATH)
 
         self.populator = Populator(self)
         self.populator.start()
@@ -90,7 +90,7 @@ class Dictionary():
             affix = "S"
         
         if affix != None:
-            self.spell.add_with_affix(word, affix)
+            self.spell.add(word, affix)
             self.added += [word + "/" + affix]
         else:
             self.spell.add(word)

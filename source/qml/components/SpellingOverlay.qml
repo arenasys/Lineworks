@@ -21,10 +21,6 @@ Item {
         return
     }
 
-    function recheck() {
-        return
-    }
-
     Timer {
         id: checkTimer
         interval: 500
@@ -272,7 +268,7 @@ Item {
 
             onPressed: {
                 if(tab.spellchecker.addWord(suggestionMenu.word)) {
-                    spelling.recheck()
+                    checkTimer.restart()
                 }
             }
         }

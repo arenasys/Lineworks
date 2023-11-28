@@ -8,3 +8,4 @@ venv
 python
 crash.log
 *.json
+dictionary

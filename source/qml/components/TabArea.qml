@@ -430,10 +430,6 @@ Rectangle {
                                         return
                                     }
 
-                                    function recheck() {
-                                        spellTimer.restart()
-                                    }
-
                                     area.onTextChanged: {
                                         textArea.lock = false
                                         if(textArea.setCursor != null) {
