@@ -4,11 +4,13 @@ An LLM integrated text editor built for cowriting. Focuses on efficient and hass
 
 ![example](https://github.com/arenasys/Lineworks/raw/master/screenshot.png)
 ## Information
-To use, [Download](https://github.com/arenasys/Lineworks/archive/refs/heads/master.zip) Lineworks, extract the archive, and then run. NVIDIA or AMD GPU acceleration is available to choose during install, otherwise choose CPU. Updating is done inside Lineworks via `File->Update`.
+To use, [Download](https://github.com/arenasys/Lineworks/archive/refs/heads/master.zip) Lineworks, extract the archive, and then run. NVIDIA or AMD* GPU acceleration is available to choose during install, otherwise choose CPU. Updating is done inside Lineworks via `File->Update`.
 
 Uses [llama.cpp](https://github.com/ggerganov/llama.cpp) with its self-contained and quantized model format, GGUF. [Many](https://huggingface.co/TheBloke?search_models=gguf) models are available, for starters try: [Mistral-7B](https://huggingface.co/TheBloke/Mistral-7B-v0.1-GGUF/blob/main/mistral-7b-v0.1.Q5_K_M.gguf). `.gguf` models placed inside the `models` folder will be available to use in Lineworks.
 
 Saving and loading is done with `.json` files, these store the current state of Lineworks. Autosaving is done every two minutes if a save file is open. Lineworks is intended to be operated via keyboard shortcuts, they are all displayed next to their corresponding action in the top menu bar.
+
+*AMD only available on Linux.
 
 ## Server
 Remote backends can be used if your local hardware is insufficient. Hosting is done with `source/server.py`, for example:
