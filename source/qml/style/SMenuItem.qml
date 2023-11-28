@@ -10,8 +10,10 @@ MenuItem {
     implicitHeight: menuItemSize
     
     property var pointSize: 10.6
-    property var color: disabled ? COMMON.fg3 : COMMON.fg1
+    property var color: inactive ? COMMON.fg3 : COMMON.fg1
     property var disabled: false
+
+    property var inactive: (disabled || (subMenu != null && subMenu.count == 0))
 
     height: visible ? menuItemSize : 0
 
@@ -24,7 +26,7 @@ MenuItem {
     signal pressed()
 
     onClicked: {
-        if(!menuItem.disabled) {
+        if(!menuItem.inactive) {
             menuItem.pressed()
         }
     }
@@ -33,7 +35,7 @@ MenuItem {
         enabled: menuItem.global
         sequence: menuItem.shortcut
         onActivated: {
-            if(!menuItem.disabled) {
+            if(!menuItem.inactive) {
                 menuItem.pressed()
             }
         }

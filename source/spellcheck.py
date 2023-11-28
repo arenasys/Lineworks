@@ -12,7 +12,7 @@ import difflib
 difflib.SequenceMatcher = CSequenceMatcher
 
 
-WORD_RE = re.compile(r"\w+")
+WORD_RE = re.compile(r"[\w'’]+")
 LINE_RE = re.compile(r".+\n*")
 DICT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dictionary")
 CACHE_SIZE = 10240

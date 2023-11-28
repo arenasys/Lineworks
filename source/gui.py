@@ -827,6 +827,7 @@ class GUI(QObject):
             self._dictionary.populator.add(data["vocabulary"])
 
         self.tabsFromJSON(data["areas"])
+        self.clearHistory()
 
     def historyFromJSON(self, data):
         self.clearHistory()

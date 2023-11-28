@@ -7,16 +7,12 @@ import gui 1.0
 Menu {
     id: root
     readonly property real menuItemSize: 20
+    opacity: count != 0 ? 1.0 : 0.0
     topPadding: 2
     bottomPadding: 2
     property var clipShadow: false
 
-    property var pointSize: 10.6
-    property var color: COMMON.fg1
-
     delegate: SMenuItem {
-        pointSize: root.pointSize
-        color: root.color
         menuItemSize: root.menuItemSize
     }
 
