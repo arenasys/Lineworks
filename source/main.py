@@ -43,6 +43,11 @@ WIN_WHEELS = {
     "cdifflib==1.2.6": "https://github.com/arenasys/binaries/releases/download/v2/cdifflib-1.2.6-cp310-cp310-win_amd64.whl"
 }
 
+LINUX_WHEELS = {
+    "cyhunspell==2.0.3": "https://github.com/arenasys/binaries/releases/download/v2/cdifflib-1.2.6-cp310-cp310-linux_x86_64.whl",
+    "cdifflib==1.2.6": "https://github.com/arenasys/binaries/releases/download/v2/cyhunspell-2.0.3-cp310-cp310-linux_x86_64.whl"
+}
+
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, pyqtProperty, QObject, QUrl, QCoreApplication, Qt, QElapsedTimer, QThread
 from PyQt5.QtQml import QQmlApplicationEngine, qmlRegisterSingletonType, qmlRegisterType
 from PyQt5.QtWidgets import QApplication
@@ -198,6 +203,9 @@ class Installer(QThread):
 
             if IS_WIN and p in WIN_WHEELS:
                 p = WIN_WHEELS[p]
+                
+            if not IS_WIN and p in LINUX_WHEELS:
+                p = LINUX_WHEELS[p]
 
             self.installing.emit(pkg)
             args = ["pip", "install", "-U", p]
