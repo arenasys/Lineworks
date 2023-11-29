@@ -10,10 +10,10 @@ Uses [llama.cpp](https://github.com/ggerganov/llama.cpp) with its self-contained
 
 Saving and loading is done with `.json` files, these store the current state of Lineworks. Autosaving is done every two minutes if a save file is open. Lineworks is intended to be operated via keyboard shortcuts, they are all displayed next to their corresponding action in the top menu bar.
 
-*AMD only available on Linux. Linux users run `python3.10 source/launch.py`.
+*AMD only available on Linux. Linux users run `bash source/start.sh`.
 
 ## Server
-Remote backends can be used if your local hardware is insufficient. Hosting is done with `source/server.py`, for example:
+Remote backends can be used if your local hardware is insufficient. Hosting is done with `python3.10 source/server.py`, for example:
 ```
 cd ~
 git clone https://github.com/arenasys/lineworks
