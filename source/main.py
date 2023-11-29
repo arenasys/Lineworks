@@ -22,13 +22,13 @@ IS_WIN = platform.system() == 'Windows'
 LLAMA_CPP_VERSIONS = {
     "Windows": {
         "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp310-cp310-win_amd64.whl",
-        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp311-cp311-win_amd64.whl",
+        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp310-cp310-win_amd64.whl",
         "AMD": None
     }, 
     "Linux": {
-        "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp311-cp311-manylinux_2_31_x86_64.whl",
-        "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp311-cp311-manylinux_2_31_x86_64.whl"
+        "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp310-cp310-manylinux_2_31_x86_64.whl",
+        "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp310-cp310-manylinux_2_31_x86_64.whl"
     }
 }
 
