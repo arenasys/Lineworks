@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "${PWD##*/}" = "source" ]
+if [ ! -d "./source" ] 
 then
     cd ..
 fi
