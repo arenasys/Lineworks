@@ -210,6 +210,7 @@ class Tab(QObject):
         if self._last:
             self._history += [self._last]
         self._last = ""
+        self.lastUpdated.emit()
 
     def endStream(self):
         if not self._last and self._history:
