@@ -117,7 +117,19 @@ Item {
                             layout()
                         }
                     }
-                    
+
+                    function getSpan() {
+                        var p = Qt.point(line.span.x + span.x, line.span.x + span.y)
+                        if(tab.marker != -1) {
+                            if(p.x > tab.marker) {
+                                p = Qt.point(p.x+1, p.y)
+                            }
+                            if(p.y > tab.marker) {
+                                p = Qt.point(p.x, p.y+1)
+                            }
+                        }
+                        return p
+                    }
 
                     function layout() {
                         if(!line.showing) {
@@ -131,21 +143,12 @@ Item {
                             return
                         }
 
-                        var p = Qt.point(line.span.x + span.x, line.span.x + span.y)
+                        var p = getSpan()
                         var l = textArea.area.text.length
 
                         if(p.x > l || p.y > l) {
                             word.position = Qt.rect(0,0,0,0)
                             return
-                        }
-
-                        if(tab.marker != -1) {
-                            if(p.x > tab.marker) {
-                                p = Qt.point(p.x+1, p.y)
-                            }
-                            if(p.y > tab.marker) {
-                                p = Qt.point(p.x, p.y+1)
-                            }
                         }
 
                         var start = textArea.getPositionRectangleInternal(p.x)
@@ -230,8 +233,7 @@ Item {
                         acceptedButtons: Qt.RightButton
                         onPressed: {
                             suggestionMenu.model = tab.spellchecker.getSuggestions(modelData.word)
-                            suggestionMenu.start = span.x + line.span.x
-                            suggestionMenu.end = span.y + line.span.x
+                            suggestionMenu.span = word.getSpan()
                             suggestionMenu.word = modelData.word
                             suggestionMenu.popup()
                         }
@@ -244,8 +246,7 @@ Item {
     SContextMenu {
         id: suggestionMenu
         property var word: ""
-        property var start: 0
-        property var end: 0
+        property var span: Qt.point(0,0)
         property var model: []
 
         Instantiator {
@@ -254,7 +255,7 @@ Item {
                 text: modelData
 
                 onPressed: {
-                    spelling.replace(suggestionMenu.start, suggestionMenu.end, modelData)
+                    spelling.replace(suggestionMenu.span.x, suggestionMenu.span.y, modelData)
                 }
             }
             onObjectAdded: suggestionMenu.insertItem(index, object)
