@@ -137,6 +137,10 @@ class Inference():
                 self.setDone()
                 return
             if typ == "options":
+                if not os.path.exists(self.models_path):
+                    self.setError("failed locate model folder: " + self.models_path)
+                    return
+
                 models = glob.glob(os.path.join(self.models_path, "*.gguf"))
                 models = [m.rsplit(os.path.sep,1)[-1].rsplit(".",1)[0] for m in models]
                 self.respond({"type":"options", "data": {"models": models}})

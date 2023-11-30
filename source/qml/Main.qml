@@ -24,6 +24,7 @@ FocusReleaser {
     Component.onCompleted: {
         window.title = Qt.binding(function() { return GUI.title; })
         COMMON.light = Qt.binding(function() { return GUI.lightMode; })
+        GUI.ready()
     }
     
     Rectangle {
@@ -1436,7 +1437,6 @@ FocusReleaser {
             modal: true
             property var status: ""
             property var error: ""
-
 
             Connections {
                 target: GUI

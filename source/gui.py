@@ -209,7 +209,6 @@ class GUI(QObject):
         self.getVersionInfo()
 
         self._backend = None
-        self.restartBackend()
 
     @pyqtProperty('QString', notify=updated)
     def title(self):
@@ -342,6 +341,10 @@ class GUI(QObject):
         self._status = "idle"
         self.setModels([])
         self.workingUpdated.emit()
+
+    @pyqtSlot()
+    def ready(self):
+        self.restartBackend()
 
     @pyqtSlot()
     def restartBackend(self):
