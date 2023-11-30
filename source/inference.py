@@ -92,25 +92,43 @@ class Inference():
     def stop(self):
         self.abort = True
 
-    def process(self, request):
+    def import_llama(self):
         loaded = False
+        err = None
         try:
             from llama_cpp_cuda import Llama
             loaded = True
-        except:
+        except ModuleNotFoundError:
             pass
+        except Exception as e:
+            log_traceback("IMPORT (CUDA)")
+            err = e
+            pass
+
+        if err:
+            return False, err
+        
+        if loaded:
+            return True, None
+        
         try:
             from llama_cpp import Llama
             loaded = True
-        except:
+        except Exception as e:
+            log_traceback("IMPORT")
+            err = e
             pass
+        
+        return loaded, err
+
+    def process(self, request):
+        loaded, err = self.import_llama()
 
         if not loaded:
-            self.setError("failed to load llama_cpp_python")
+            self.setError("failed to load llama-cpp-python: " + str(err))
             return
 
         try:
-
             req = request
             typ = req["type"]
 
