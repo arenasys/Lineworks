@@ -138,7 +138,7 @@ class Inference():
                 return
             if typ == "options":
                 if not os.path.exists(self.models_path):
-                    self.setError("failed locate model folder: " + self.models_path)
+                    self.setError("failed to locate model folder: " + self.models_path)
                     return
 
                 models = glob.glob(os.path.join(self.models_path, "*.gguf"))
