@@ -92,7 +92,7 @@ class Inference():
     def stop(self):
         self.abort = True
 
-    def import_llama(self):
+    def process(self, request):
         loaded = False
         err = None
         try:
@@ -105,24 +105,14 @@ class Inference():
             err = e
             pass
 
-        if err:
-            return False, err
-        
-        if loaded:
-            return True, None
-        
-        try:
-            from llama_cpp import Llama
-            loaded = True
-        except Exception as e:
-            log_traceback("IMPORT")
-            err = e
-            pass
-        
-        return loaded, err
-
-    def process(self, request):
-        loaded, err = self.import_llama()
+        if not err and not loaded:        
+            try:
+                from llama_cpp import Llama
+                loaded = True
+            except Exception as e:
+                log_traceback("IMPORT")
+                err = e
+                pass
 
         if not loaded:
             self.setError("failed to load llama-cpp-python: " + str(err))
