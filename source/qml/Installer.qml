@@ -45,7 +45,7 @@ FocusReleaser {
                 label: "Mode"
                 disabled: COORDINATOR.disable
                 currentIndex: COORDINATOR.mode
-                model: ["CPU", "NVDIA", "AMD"]
+                model: COORDINATOR.modes
                 onCurrentIndexChanged: {
                     currentIndex = currentIndex
                     COORDINATOR.mode = currentIndex

@@ -19,7 +19,7 @@ import re
 import platform
 IS_WIN = platform.system() == 'Windows'
 
-LLAMA_CPP_VERSIONS = {
+LLAMA_CPP_WHEELS = {
     "Windows": {
         "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp310-cp310-win_amd64.whl",
         "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp310-cp310-win_amd64.whl",
@@ -31,6 +31,12 @@ LLAMA_CPP_VERSIONS = {
         "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp310-cp310-manylinux_2_31_x86_64.whl"
     }
 }
+
+NVIDIA_CUDA_WHEELS = [
+    "nvidia-pyindex",
+    "nvidia-cuda-runtime-cu12",
+    "nvidia-cublas-cu12"
+]
 
 DICTIONARY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dictionary")
 DICTIONARY = {
@@ -294,6 +300,7 @@ class Coordinator(QObject):
     def mode(self, mode):
         self._mode = self.modes[mode]
         self.writeMode()
+        self.updated.emit()
 
     @pyqtProperty(list, constant=True)
     def modes(self):
@@ -332,7 +339,7 @@ class Coordinator(QObject):
     @pyqtProperty(bool, notify=updated)
     def needRestart(self):
         return self._needRestart
-
+    
     def findNeeded(self):
         self.llama_version = None
         try:
@@ -344,11 +351,15 @@ class Coordinator(QObject):
                 self.llama_version = pkg_resources.get_distribution("llama_cpp_python_cuda")
             except:
                 pass
-                
-        self.required_need = check(self.required, self.enforce)
+            
+        required = self.required
+        if self._mode == "NVIDIA":
+            required = required + NVIDIA_CUDA_WHEELS
+            
+        return check(required, self.enforce)
 
     def getNeeded(self):
-        needed = self.required_need
+        needed = self.findNeeded()
 
         for file in DICTIONARY.keys():
             if not os.path.exists(os.path.join(DICTIONARY_PATH, file)):
@@ -358,8 +369,9 @@ class Coordinator(QObject):
         if not self.llama_version:
             needed = needed + ["llama-cpp-python"]
 
-        needed = [n for n in needed if n.startswith("wheel")] + [n for n in needed if not n.startswith("wheel")]
-        needed = [n for n in needed if n.startswith("pip")] + [n for n in needed if not n.startswith("pip")]
+        if needed:
+            needed = ["pip", "wheel"] + needed
+
         return needed
 
     @pyqtSlot()
@@ -394,7 +406,7 @@ class Coordinator(QObject):
         
         if "llama-cpp-python" in packages:
             platform = "Windows" if IS_WIN else "Linux"
-            wheel = LLAMA_CPP_VERSIONS[platform][self._mode]
+            wheel = LLAMA_CPP_WHEELS[platform][self._mode]
             packages[packages.index("llama-cpp-python")] = wheel
 
         self.installer = Installer(self, packages)
@@ -495,6 +507,16 @@ def start(engine, app, mode):
     gui.registerTypes()
 
     backend = gui.GUI(parent=app, mode=mode)
+
+    if mode == "NVIDIA":
+        from nvidia.cuda_runtime import bin as cudart_bin
+        from nvidia.cublas import bin as cublas_bin
+        import ctypes
+        for file_path in [cudart_bin.__file__, cublas_bin.__file__]:
+            bin_path = os.path.dirname(os.path.abspath(file_path))
+            sys.path.append(bin_path)
+            os.add_dll_directory(bin_path)
+        ctypes.RTLD_GLOBAL = None # fix for llama.cpp disabling dll import directories
 
     qmlRegisterSingletonType(gui.GUI, "gui", 1, 0, "GUI", lambda qml, js: backend)
 
