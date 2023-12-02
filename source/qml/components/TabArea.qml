@@ -405,7 +405,6 @@ Rectangle {
 
                                     function layout() {
                                         marker.layout()
-                                        textArea.stream.update()
                                     }
 
                                     property var setCursor: null

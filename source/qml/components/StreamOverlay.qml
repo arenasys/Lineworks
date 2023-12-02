@@ -32,13 +32,19 @@ Item {
         
         Rectangle {
             id: indicator
+
+            property var oldSpan: null
+            property var span: model.data
+
             function layout() {
                 if(value == 0 && index != 0) {
                     return
                 }
 
-                var p = modelData
+                var p = indicator.span
                 var l = textArea.area.text.length
+
+                indicator.oldSpan = Qt.point(p.x, p.y)
 
                 if(p.x > l || p.y > l) {
                     indicator.position = Qt.rect(0,0,0,0)
@@ -71,6 +77,22 @@ Item {
                     if(stream.visible) {
                         layout()
                     }
+                }
+            }
+
+            Component.onCompleted: {
+                if(stream.visible) {
+                    layout()
+                }
+            }
+
+            onSpanChanged: {
+                if(oldSpan == null) {
+                    return
+                }
+
+                if(stream.visible) {
+                    layout()
                 }
             }
 
