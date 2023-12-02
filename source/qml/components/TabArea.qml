@@ -370,7 +370,7 @@ Rectangle {
                                     anchors.fill: parent
                                     area.padding: 10
                                     area.leftPadding: 12
-                                    area.rightPadding: 12
+                                    area.rightPadding: 16
                                     area.selectionColor: root.inactive ? COMMON.accent(0, 0.0, 0.4) : COMMON.accent(0, 0.7, 0.7)
 
                                     tab: modelData

@@ -108,15 +108,14 @@ Rectangle {
         contentHeight: textArea.height
         contentWidth: width
         boundsBehavior: Flickable.StopAtBounds
-        clip: true
+        clip: false
         interactive: false
 
-        ScrollBar.vertical: SScrollBarV {
+        ScrollBar.vertical: TabTextAreaScroll {
             id: controlScrollBar
             parent: control
             anchors.right: control.right
-            anchors.rightMargin: -1
-            barWidth: 5
+            anchors.rightMargin: barWidth-areaWidth-4
             color: COMMON.bg2_5
             hoverColor: COMMON.bg4
             pressedColor: COMMON.bg5
