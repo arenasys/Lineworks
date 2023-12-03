@@ -511,8 +511,14 @@ Rectangle {
 
                                         function onContentChanged() {
                                             if(modelData.content != textArea.text) {
-                                                console.log("DESYNC")
+                                                console.log("DESYNC") // shouldnt happen, but try to resync without moving the view
+                                                var y = textArea.control.contentY
+                                                var p = textArea.area.cursorPosition
+
                                                 textArea.text = modelData.content
+
+                                                textArea.control.contentY = y
+                                                textArea.area.cursorPosition = p
                                             }
                                         }
                                     }
