@@ -519,6 +519,8 @@ Rectangle {
 
                                                 textArea.control.contentY = y
                                                 textArea.area.cursorPosition = p
+
+                                                modelData.spellchecker.update(textArea.text)
                                             }
                                         }
                                     }

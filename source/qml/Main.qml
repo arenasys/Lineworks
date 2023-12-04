@@ -313,6 +313,10 @@ FocusReleaser {
                             bindKeyCurrent: "model_path"
                             bindKeyModel: "model_paths"
 
+                            function display(text) {
+                                return GUI.getName(text)
+                            }
+
                             override: value == "" ? "No models" : ""
                         }
 

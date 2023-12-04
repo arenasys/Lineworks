@@ -958,5 +958,9 @@ class GUI(QObject):
             self.settingsUpdated.emit()
             self.saveConfig()
 
+    @pyqtSlot(str, result=str)
+    def getName(self, name):
+        return name.rsplit('\\',1)[-1].rsplit('/',1)[-1]
+
 def registerTypes():
     qmlRegisterUncreatableType(HistoryEntry, "gui", 1, 0, "HistoryEntry", "Not a QML type")

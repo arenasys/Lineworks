@@ -149,8 +149,8 @@ class Inference():
                     self.setError("failed to locate model folder: " + self.models_path)
                     return
 
-                models = glob.glob(os.path.join(self.models_path, "*.gguf"))
-                models = [m.rsplit(os.path.sep,1)[-1].rsplit(".",1)[0] for m in models]
+                models = glob.glob(os.path.join(self.models_path, "**", "*.gguf"), recursive=True)
+                models = [os.path.relpath(m, self.models_path).rsplit(".",1)[0] for m in models]
                 self.respond({"type":"options", "data": {"models": models}})
                 return
             if typ == "generate":
