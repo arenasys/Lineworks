@@ -19,16 +19,17 @@ import re
 import platform
 IS_WIN = platform.system() == 'Windows'
 
+LLAMA_CPP_VERSION = "0.2.20"
 LLAMA_CPP_WHEELS = {
     "Windows": {
-        "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp310-cp310-win_amd64.whl",
-        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp310-cp310-win_amd64.whl",
-        "AMD": None
+        "CPU": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.20+cpuavx2-cp310-cp310-win_amd64.whl",
+        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.20+cu121-cp310-cp310-win_amd64.whl",
+        "AMD": None #"https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.20+rocm5.5.1-cp310-cp310-win_amd64.whl"
     }, 
     "Linux": {
-        "CPU": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_python-0.2.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
-        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.11+cu121-cp310-cp310-manylinux_2_31_x86_64.whl",
-        "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp310-cp310-manylinux_2_31_x86_64.whl"
+        "CPU": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.20+cpuavx2-cp310-cp310-manylinux_2_31_x86_64.whl",
+        "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.20+cu121-cp310-cp310-manylinux_2_31_x86_64.whl",
+        "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.20+rocm5.6.1-cp310-cp310-manylinux_2_31_x86_64.whl"
     }
 }
 
@@ -195,7 +196,7 @@ class Installer(QThread):
 
     def run(self):
         for p in self.packages:
-            pkg = "llama-cpp-python" if "llama-cpp-python" in p else p
+            pkg = "llama-cpp-python==" + LLAMA_CPP_VERSION if "llama-cpp-python" in p else p
 
             if p == "hunspell-dictionaries":
                 self.installing.emit(pkg)
@@ -343,12 +344,12 @@ class Coordinator(QObject):
     def findNeeded(self):
         self.llama_version = None
         try:
-            self.llama_version = pkg_resources.get_distribution("llama_cpp_python")
+            self.llama_version = pkg_resources.get_distribution("llama_cpp_python_cuda")
         except:
             pass
         if not self.llama_version:
             try:
-                self.llama_version = pkg_resources.get_distribution("llama_cpp_python_cuda")
+                self.llama_version = pkg_resources.get_distribution("llama_cpp_python")
             except:
                 pass
             
@@ -366,8 +367,8 @@ class Coordinator(QObject):
                 needed = needed + ["hunspell-dictionaries"]
                 break
         
-        if not self.llama_version:
-            needed = needed + ["llama-cpp-python"]
+        if not self.llama_version or not LLAMA_CPP_VERSION in str(self.llama_version):
+            needed = needed + ["llama-cpp-python=="+LLAMA_CPP_VERSION]
 
         if needed:
             needed = ["pip", "wheel"] + needed
@@ -404,10 +405,11 @@ class Coordinator(QObject):
             self.done()
             return
         
-        if "llama-cpp-python" in packages:
+        llama_cpp_pkg = "llama-cpp-python==" + LLAMA_CPP_VERSION
+        if llama_cpp_pkg in packages:
             platform = "Windows" if IS_WIN else "Linux"
             wheel = LLAMA_CPP_WHEELS[platform][self._mode]
-            packages[packages.index("llama-cpp-python")] = wheel
+            packages[packages.index(llama_cpp_pkg)] = wheel
 
         self.installer = Installer(self, packages)
         self.installer.installed.connect(self.onInstalled)

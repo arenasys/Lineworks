@@ -25,22 +25,17 @@ import spellcheck
 SOURCE_REPO = "https://github.com/arenasys/Lineworks"
 DEFAULT_PRESETS = {
     "Simple": {
-        "temperature": 0.7,
+        "temperature": 1.2,
+        "min_p": 0.1,
         "top_p": 0.9,
         "top_k": 20,
         "repeat_penalty": 1.15
     },
-    #"Storywrite": {
-    #    "temperature": 0.9,
-    #    "top_p": 0.7,
-    #    "top_k": 100,
-    #    "repeat_penalty": 1.05
-    #}
 }
+DEFAULT_PRESET = "Simple"
 
 class Update(QThread):
     def run(self):
-        #time.sleep(5)
         git.gitReset(".", SOURCE_REPO)
 
 class HistoryEntry(QObject):
@@ -137,7 +132,7 @@ class GUI(QObject):
         super().__init__(parent)
 
         self._gen_config = copy.deepcopy(DEFAULT_PRESETS)
-        gen_default_name = list(self._gen_config.keys())[0]
+        gen_default_name = DEFAULT_PRESET
         gen_default = self._gen_config[gen_default_name]
 
         self._gen_parameters = misc.VariantMap(self, gen_default, strict=True)
@@ -287,7 +282,7 @@ class GUI(QObject):
     def newPreset(self):
         count = len(self._gen_presets.get("presets"))
         name = f"Preset {count+1}"
-        cfg = self._gen_parameters._map.copy()
+        cfg = DEFAULT_PRESETS[DEFAULT_PRESET].copy()
         self._gen_config[name] = cfg
         self.commitPresets(name)
 
@@ -602,6 +597,10 @@ class GUI(QObject):
         area = self._tabs.current
         self._current_tab = area._tabs[area.current]
         parameters = copy.deepcopy(self._gen_parameters._map)
+        if parameters["min_p"] > 0.0:
+            parameters["top_p"] = 1.0
+            parameters["top_k"] = 0
+
         parameters["prompt"] = self._current_tab.context()
         parameters["max_tokens"] = self._stop_parameters.get("max_tokens")
         parameters["stop_condition"] = self._stop_parameters.get("stop_condition")

@@ -409,7 +409,7 @@ FocusReleaser {
 
                 Item {
                     width: parent.width
-                    height: 25 + (25*5) + 3 + 3
+                    height: 25 + (25*(minPSlider.active ? 4 : 6)) + 3 + 3
 
                     RectangularGlow {
                         anchors.fill: parent
@@ -563,8 +563,28 @@ FocusReleaser {
                         }
 
                         SSlider {
+                            id: minPSlider
+                            property var active: minPSlider.value != 0.0
+
                             height: 25
                             width: parent.width
+                            label: "Min P"
+                            minValue: 0
+                            maxValue: 1
+                            precValue: 2
+                            incValue: 0.01
+                            snapValue: 0.05
+                            bounded: true
+                            overlay: !active
+
+                            bindMap: GUI.generateParameters
+                            bindKey: "min_p"
+                        }
+
+                        SSlider {
+                            height: minPSlider.active ? 0 : 25
+                            width: parent.width
+                            visible: height != 0
                             label: "Top P"
                             minValue: 0
                             maxValue: 1
@@ -578,8 +598,9 @@ FocusReleaser {
                         }
 
                         SSlider {
-                            height: 25
+                            height: minPSlider.active ? 0 : 25
                             width: parent.width
+                            visible: height != 0
                             label: "Top K"
                             minValue: 0
                             maxValue: 200

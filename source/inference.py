@@ -125,7 +125,7 @@ class Inference():
             if typ == "load":
                 self.setStatus("loading")
                 if self.llm:
-                    self.llm.__del__()
+                    self.llm._model.__del__()
                 try:
                     self.model = req["data"].copy()
                     model_path = req["data"]["model_path"]
@@ -140,7 +140,7 @@ class Inference():
             if typ == "unload":
                 self.setStatus("unloading")
                 if self.llm:
-                    self.llm.__del__()
+                    self.llm._model.__del__()
                 self.llm = None
                 self.setDone()
                 return
