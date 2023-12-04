@@ -8,6 +8,10 @@ ListModel {
     property var debug: false
     property var inert: false
 
+    function equal(a, b) {
+        return a == b
+    }
+
     function doAppend(obj) {
         if(debug) {
             console.log("APPEND")
@@ -69,7 +73,7 @@ ListModel {
     function find(a, b) {
         for(var i = 0; i < a.length; i++) {
             var e = a[i]
-            if(a[i] == b) {
+            if(equal(a[i], b)) {
                 return i
             }
         }
@@ -102,7 +106,7 @@ ListModel {
         var total = next.length
         var i = 0
         while(next.length != 0 && i < current.length) {
-            if(current[i] == next[0]) {
+            if(equal(current[i], next[0])) {
                 next.shift()
                 i += 1
                 continue
@@ -166,7 +170,7 @@ ListModel {
         }
 
         for(var i = 0; i < sub.length; i++) {
-            if(current[i] != sub[i]) {
+            if(!equal(current[i], sub[i])) {
                 var j = current.indexOf(sub[i]);
                 doMove(j, i)
             }

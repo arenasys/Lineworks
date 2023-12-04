@@ -28,16 +28,27 @@ Item {
         model: ArrayModel {
             id: indicators
             source: tab.last
+
+            function equal(a, b) {
+                return a.x == b.x && a.y == b.y
+            }
         }
         
         Rectangle {
             id: indicator
 
+            property var first: index == 0
             property var oldSpan: null
-            property var span: model.data
+            property var span: Qt.point(model.data.x, model.data.y)
+
+            onFirstChanged: {
+                if(first) {
+                    layout()
+                }
+            }
 
             function layout() {
-                if(value == 0 && index != 0) {
+                if(value == 0 && !first) {
                     return
                 }
 
@@ -129,7 +140,7 @@ Item {
             }
 
             Rectangle {
-                visible: index == 0
+                visible: indicator.first
                 x: 0
                 y: vertical ? 0 : -7
                 width: 2
