@@ -24,7 +24,7 @@ LLAMA_CPP_WHEELS = {
     "Windows": {
         "CPU": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.20+cpuavx2-cp310-cp310-win_amd64.whl",
         "NVIDIA": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.20+cu121-cp310-cp310-win_amd64.whl",
-        "AMD": None #"https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.20+rocm5.5.1-cp310-cp310-win_amd64.whl"
+        "AMD": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.20+rocm5.5.1-cp310-cp310-win_amd64.whl"
     }, 
     "Linux": {
         "CPU": "https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.20+cpuavx2-cp310-cp310-manylinux_2_31_x86_64.whl",
@@ -305,10 +305,7 @@ class Coordinator(QObject):
 
     @pyqtProperty(list, constant=True)
     def modes(self):
-        if IS_WIN:
-            return ["CPU", "NVIDIA"]
-        else:
-            return ["CPU", "NVIDIA", "AMD"]
+        return ["CPU", "NVIDIA", "AMD"]
     
     def writeMode(self):
         cfg = {}
@@ -510,15 +507,22 @@ def start(engine, app, mode):
 
     backend = gui.GUI(parent=app, mode=mode)
 
-    if mode == "NVIDIA":
-        from nvidia.cuda_runtime import bin as cudart_bin
-        from nvidia.cublas import bin as cublas_bin
+    if IS_WIN and mode != "CPU":
         import ctypes
-        for file_path in [cudart_bin.__file__, cublas_bin.__file__]:
-            bin_path = os.path.dirname(os.path.abspath(file_path))
-            sys.path.append(bin_path)
-            os.add_dll_directory(bin_path)
         ctypes.RTLD_GLOBAL = None # fix for llama.cpp disabling dll import directories
+        
+        if mode == "NVIDIA":
+            from nvidia.cuda_runtime import bin as cudart_bin
+            from nvidia.cublas import bin as cublas_bin
+            for file_path in [cudart_bin.__file__, cublas_bin.__file__]:
+                bin_path = os.path.dirname(os.path.abspath(file_path))
+                sys.path.append(bin_path)
+                os.add_dll_directory(bin_path)
+        elif mode == "AMD":
+            if "HIP_PATH" in os.environ:
+                os.add_dll_directory(os.path.join(os.environ["HIP_PATH"], "bin"))
+            else:
+                raise Exception("AMD requires HIP_PATH to be set")
 
     qmlRegisterSingletonType(gui.GUI, "gui", 1, 0, "GUI", lambda qml, js: backend)
 
