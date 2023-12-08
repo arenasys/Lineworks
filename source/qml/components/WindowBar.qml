@@ -172,6 +172,9 @@ SMenuBar {
                     GUI.generate()
                 }
             }
+            onFailed: {
+                GUI.fail()
+            }
         }
 
         SMenuItem {
@@ -184,6 +187,9 @@ SMenuBar {
                     GUI.regenerate()
                 }
             }
+            onFailed: {
+                GUI.fail()
+            }
         }
 
         SMenuItem {
@@ -195,6 +201,9 @@ SMenuBar {
                 if(!GUI.isGenerating) {
                     GUI.revert()
                 }
+            }
+            onFailed: {
+                GUI.fail()
             }
         }
 
@@ -209,19 +218,25 @@ SMenuBar {
                     GUI.abort()
                 }
             }
+            onFailed: {
+                GUI.fail()
+            }
         }
 
         SMenuSeparator {}
 
         SMenuItem {
-            text: "Load model"
+            text: GUI.modelIsLoaded ? "Reload model" : "Load model"
             shortcut: "Ctrl+L"
             global: true
-            disabled: GUI.modelIsLoaded || GUI.modelIsWorking
+            disabled: GUI.modelIsWorking
             onPressed: {
                 if(!GUI.isGenerating) {
                     GUI.load()
                 }
+            }
+            onFailed: {
+                GUI.fail()
             }
         }
 
@@ -234,6 +249,9 @@ SMenuBar {
                 if(!GUI.isGenerating) {
                     GUI.unload()
                 }
+            }
+            onFailed: {
+                GUI.fail()
             }
         }
 
@@ -434,6 +452,16 @@ SMenuBar {
                 onCheckedChanged: {
                     GUI.streamOverlay = checked
                     checked = Qt.binding(function () { return GUI.streamOverlay; })
+                }
+            }
+
+            SMenuItem {
+                text: "Scroll positions"
+                checkable: true
+                checked: GUI.positionOverlay
+                onCheckedChanged: {
+                    GUI.positionOverlay = checked
+                    checked = Qt.binding(function () { return GUI.positionOverlay; })
                 }
             }
         }

@@ -29,6 +29,22 @@ ScrollBar {
             anchors.leftMargin: -3
             color: control.pressed ? control.pressedColor : (control.hovered ? control.hoverColor : control.color)
             opacity: control.policy === ScrollBar.AlwaysOn || (control.active && control.size < 1.0) ? 0.75 : 0
+        
+            Rectangle {
+                height: 1
+                width: parent.width
+                color: COMMON.bg4
+                anchors.top: parent.top
+                anchors.margins: -1
+            }
+
+            Rectangle {
+                height: 1
+                width: parent.width
+                color: COMMON.bg4
+                anchors.bottom: parent.bottom
+                anchors.margins: -1
+            }
         }
     }
 }

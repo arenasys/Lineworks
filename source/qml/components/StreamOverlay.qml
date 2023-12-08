@@ -16,6 +16,9 @@ Item {
     property var inactive
     property var working
 
+    property var start: repeater.count > 0 ? repeater.itemAt(0).y : null
+    property var end: repeater.count > 0 ? repeater.itemAt(repeater.count-1).y : null
+
     onVisibleChanged: {
         update()
     }
@@ -25,6 +28,7 @@ Item {
     }
 
     Repeater {
+        id: repeater
         model: ArrayModel {
             id: indicators
             source: tab.last

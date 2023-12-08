@@ -24,6 +24,7 @@ MenuItem {
     property alias contentWidth: label.contentWidth
 
     signal pressed()
+    signal failed()
 
     onClicked: {
         if(!menuItem.inactive) {
@@ -37,6 +38,8 @@ MenuItem {
         onActivated: {
             if(!menuItem.inactive) {
                 menuItem.pressed()
+            } else {
+                menuItem.failed()
             }
         }
     }

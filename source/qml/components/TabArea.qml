@@ -299,17 +299,6 @@ Rectangle {
             Item {
                 anchors.fill: parent
                 anchors.margins: 1
-                clip: true
-                RectangularGlow {
-                    anchors.centerIn: parent
-                    width: Math.min(600, parent.width)
-                    height: parent.height-2
-                    glowRadius: 8
-                    opacity: 0.15
-                    spread: 0.2
-                    color: "black"
-                    cornerRadius: 10
-                }
 
                 StackLayout {
                     anchors.fill: parent
@@ -322,6 +311,28 @@ Rectangle {
                             unique: true
                         }
                         Item {
+                            
+                            Item {
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                anchors.margins: 1
+                                clip: true
+                                width: parent.width
+                                RectangularGlow {
+                                    x: parent.width/2 - (Math.min(600, parent.width)/2)
+                                    width: Math.min(600, parent.width) + (textArea.position.visible ? 10 : 0)
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+
+                                    glowRadius: 8
+                                    opacity: 0.15
+                                    spread: 0.2
+                                    color: "black"
+                                    cornerRadius: 10
+                                }
+                            }
+
+
                             Rectangle {
                                 id: content
                                 color: COMMON.light ? COMMON.bg00 : COMMON.bg1
@@ -334,7 +345,7 @@ Rectangle {
                                 anchors.leftMargin: 0
                                 anchors.rightMargin: 0
 
-                                property var working: modelData == GUI.workingTab
+                                property var working: model.data == GUI.workingTab
 
                                 function focus() {
                                     textArea.forceActiveFocus()
@@ -373,12 +384,12 @@ Rectangle {
                                     area.rightPadding: 16
                                     area.selectionColor: root.inactive ? COMMON.accent(0, 0.0, 0.4) : COMMON.accent(0, 0.7, 0.7)
 
-                                    tab: modelData
+                                    tab: model.data
                                     inactive: root.inactive
                                     working: content.working
 
                                     function clean(text) {
-                                        return modelData.clean(text)
+                                        return model.data.clean(text)
                                     }
 
                                     function insert(index, text) {
@@ -398,13 +409,9 @@ Rectangle {
 
                                     function align() {
                                         // sync marker and cursor alignment when they are visibly in the same spot
-                                        if(modelData.marker != -1 && modelData.marker + 1 == textArea.area.cursorPosition) {
+                                        if(model.data.marker != -1 && model.data.marker + 1 == textArea.area.cursorPosition) {
                                             textArea.area.cursorPosition -= 1
                                         }
-                                    }
-
-                                    function layout() {
-                                        marker.layout()
                                     }
 
                                     property var setCursor: null
@@ -414,10 +421,10 @@ Rectangle {
                                             if(!moving) {
                                                 area.remove(area.text.length-1,area.text.length)
                                             }
-                                        } else if(area.text.includes("\u00AD") || modelData.marker == -1) { //has marker
-                                            modelData.content = area.text
+                                        } else if(area.text.includes("\u00AD") || model.data.marker == -1) { //has marker
+                                            model.data.content = area.text
                                         } else if(area.cursorPosition == area.text.length) { // move marker to end
-                                            modelData.content = area.text
+                                            model.data.content = area.text
                                         } else { //move marker to cursor
                                             if(!moving) {
                                                 area.insert(area.cursorPosition, "\u00AD")
@@ -425,7 +432,7 @@ Rectangle {
                                         }
                                         
                                         textArea.spelling.update()
-                                        layout()
+                                        textArea.marker.layout()
                                         return
                                     }
 
@@ -449,10 +456,10 @@ Rectangle {
                                     }
 
                                     Connections {
-                                        target: modelData
+                                        target: model.data
 
                                         function onMarkerChanged() {
-                                            textArea.layout()
+                                            textArea.marker.layout()
                                         }
 
                                         function onFocus() {
@@ -461,7 +468,7 @@ Rectangle {
 
                                         function onSet() {
                                             if(!GUI.isGenerating) {
-                                                modelData.moveMarker(textArea.area.cursorPosition)
+                                                model.data.moveMarker(textArea.area.cursorPosition)
                                             }
                                             textArea.ensureVisible(textArea.area.cursorPosition)
                                         }
@@ -510,24 +517,24 @@ Rectangle {
                                         } 
 
                                         function onContentChanged() {
-                                            if(modelData.content != textArea.text) {
+                                            if(model.data.content != textArea.text) {
                                                 console.log("DESYNC") // shouldnt happen, but try to resync without moving the view
                                                 var y = textArea.control.contentY
                                                 var p = textArea.area.cursorPosition
 
-                                                textArea.text = modelData.content
+                                                textArea.text = model.data.content
 
                                                 textArea.control.contentY = y
                                                 textArea.area.cursorPosition = p
 
-                                                modelData.spellchecker.update(textArea.text)
+                                                model.data.spellchecker.update(textArea.text)
                                             }
                                         }
                                     }
 
                                     Component.onCompleted: {
-                                        modelData.setHighlighting(area.textDocument)
-                                        area.insert(0, modelData.initial)
+                                        model.data.setHighlighting(area.textDocument)
+                                        area.insert(0, model.data.initial)
                                         area.cursorPosition = 0
                                     }
 
@@ -539,8 +546,8 @@ Rectangle {
                                             if ((mouse.button == Qt.LeftButton) && (mouse.modifiers & Qt.ControlModifier)) {
                                                 var position = textArea.area.mapFromItem(textMouseArea, Qt.point(mouse.x, mouse.y))
                                                 var p = textArea.area.positionAt(position.x, position.y)
-                                                if(p != modelData.marker && !GUI.isGenerating) {
-                                                    modelData.moveMarker(p)
+                                                if(p != model.data.marker && !GUI.isGenerating) {
+                                                    model.data.moveMarker(p)
                                                 }
                                             } else {
                                                 mouse.accepted = false
@@ -553,13 +560,12 @@ Rectangle {
                                     id: overlays
                                     anchors.fill: textArea
                                     clip: true
-                                    MarkerOverlay {
-                                        id: marker
-                                        tab: modelData
-                                        textArea: textArea
-                                        inactive: root.inactive
-                                        working: content.working
-                                    }
+                                }
+
+                                Rectangle {
+                                    color: "transparent"
+                                    anchors.fill: textArea
+                                    border.color: COMMON.bg4
                                 }
 
                                 Rectangle {

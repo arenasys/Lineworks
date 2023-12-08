@@ -187,7 +187,7 @@ class Tab(QObject):
 
     def revert(self):
         if not self._last:
-            return
+            return False
 
         marker = self.lastStart()
 
@@ -205,6 +205,8 @@ class Tab(QObject):
             if self._marker != -1:
                 text += chr(MARK) + self._content[self._marker+1:]
             self.content = text
+
+        return True
     
     def startStream(self):
         if self._last:

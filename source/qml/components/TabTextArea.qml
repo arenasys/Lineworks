@@ -19,6 +19,9 @@ Rectangle {
 
     property alias spelling: spelling
     property alias stream: stream
+    property alias marker: marker
+    property alias position: positionBar
+
     property var tab
     property var inactive
     property var working
@@ -26,7 +29,7 @@ Rectangle {
     property var lock: false
     property var moving: false
 
-    function getPositionRectangle(position) {
+    function getPositionRectangleExternal(position) {
         position = Math.max(0, Math.min(textArea.length, position))
         var rect = textArea.positionToRectangle(position)
         return root.mapFromItem(textArea, rect)
@@ -43,7 +46,7 @@ Rectangle {
         if(lock || moving) {
             return;
         }
-        var pos = getPositionRectangle(position)
+        var pos = getPositionRectangleExternal(position)
         var delta = 0
         var diff = 9
         if(pos.y-diff < 0) {
@@ -57,6 +60,7 @@ Rectangle {
     }
 
     function layout() {
+        marker.layout()
         return
     }
     
@@ -191,15 +195,6 @@ Rectangle {
             working: root.working
         }
 
-        Rectangle {
-            anchors.fill: textArea
-            color: "transparent"
-            border.color: "red"
-            border.width: 1
-            anchors.margins: 10
-            visible: false// textArea.activeFocus
-        }
-
         TextArea {
             id: textArea
             width: parent.width
@@ -306,7 +301,6 @@ Rectangle {
             }
         }
 
-
         SpellingOverlay {
             anchors.fill: textArea
             id: spelling
@@ -322,8 +316,99 @@ Rectangle {
             }
         }
 
+        MarkerOverlay {
+            id: marker
+            anchors.fill: textArea
+            tab: root.tab
+            textArea: root
+            inactive: root.inactive
+            working: root.working || (!root.inactive && GUI.modelIsWorking)
+        }
+
         Keys.onPressed: {
             event.accepted = true
         }
+    }
+
+    Item {
+        visible: positionBar.visible
+        anchors.left: parent.right
+        anchors.right: positionBar.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+
+        Rectangle {
+            anchors.fill: parent
+            anchors.topMargin: 1
+            anchors.bottomMargin: 1
+            color: COMMON.bg0_5
+        }
+
+
+        Rectangle {
+            visible: stream.start != null
+            id: genIndicator
+            color: markerIndicator.color
+            opacity: 0.2
+            width: parent.width
+
+            property var start: control.height*(stream.start/control.contentHeight)
+            property var end: markerIndicator.y
+
+            y: start
+            height: end-start
+        }
+
+        Rectangle {
+            id: selectionIndicator
+            color: COMMON.fg3
+            opacity: 0.25
+            width: parent.width
+
+            property var startPos: root.getPositionRectangleInternal(textArea.selectionStart).y
+            property var endPos: root.getPositionRectangleInternal(textArea.selectionEnd).y
+
+            property var start: control.height*(startPos/control.contentHeight)
+            property var end: control.height*(endPos/control.contentHeight)
+
+            y: start
+            height: end-start
+        }
+
+        SShadow {
+            anchors.topMargin: 0
+            anchors.bottomMargin: 0
+            anchors.leftMargin: -1
+            anchors.rightMargin: -1
+            anchors.fill: parent
+            opacity: 0.5 
+        }
+
+        Rectangle {
+            id: cursorIndicator
+            height: 2
+            color: COMMON.fg3
+            width: parent.width
+            y: control.height*(textArea.cursorRectangle.y/control.contentHeight)
+        }
+
+        Rectangle {
+            id: markerIndicator
+            height: 2
+            color: COMMON.accent(0, 1.0, 0.5)
+            width: parent.width
+            y: control.height*(marker.position.y/control.contentHeight)
+        }
+    }
+
+    Rectangle {
+        id: positionBar
+        visible: controlScrollBar.policy == ScrollBar.AlwaysOn && GUI.positionOverlay
+        x: parent.width + 10
+        width: 1
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.margins: 1
+        color: COMMON.bg3
     }
 }

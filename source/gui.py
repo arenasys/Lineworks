@@ -127,6 +127,7 @@ class GUI(QObject):
     errored = pyqtSignal(str, str)
     clear = pyqtSignal()
     saving = pyqtSignal()
+    failed = pyqtSignal()
 
     def __init__(self, parent, mode):
         super().__init__(parent)
@@ -177,6 +178,7 @@ class GUI(QObject):
 
         self._spell_overlay = True
         self._stream_overlay = True
+        self._position_overlay = True
         self._light_mode = False
         self._mode = mode
 
@@ -592,6 +594,7 @@ class GUI(QObject):
     @pyqtSlot()
     def generate(self):
         if not self._current_model:
+            self.failed.emit()
             return
 
         area = self._tabs.current
@@ -626,13 +629,15 @@ class GUI(QObject):
     @pyqtSlot()
     def regenerate(self):
         if not self._current_model:
+            self.failed.emit()
             return
         self.revert()
         self.generate()
 
     @pyqtSlot()
     def revert(self):
-        self._tabs.currentTab().revert()
+        if not self._tabs.currentTab().revert():
+            self.fail()
 
     @pyqtSlot()
     def abort(self):
@@ -742,6 +747,7 @@ class GUI(QObject):
             "settings": {
                 "spell_overlay": self._spell_overlay,
                 "stream_overlay": self._stream_overlay,
+                "position_overlay": self._position_overlay,
                 "light_mode": self._light_mode
             },
             "mode": self._mode
@@ -783,6 +789,7 @@ class GUI(QObject):
         settings = config.get("settings", {})
         self._spell_overlay = settings.get("spell_overlay", self._spell_overlay)
         self._stream_overlay = settings.get("stream_overlay", self._stream_overlay)
+        self._position_overlay = settings.get("position_overlay", self._position_overlay)
         self._light_mode = settings.get("light_mode", self._light_mode)
         self.settingsUpdated.emit()
 
@@ -956,6 +963,21 @@ class GUI(QObject):
             self._stream_overlay = value
             self.settingsUpdated.emit()
             self.saveConfig()
+
+    @pyqtProperty(bool, notify=settingsUpdated)
+    def positionOverlay(self):
+        return self._position_overlay
+    
+    @positionOverlay.setter
+    def positionOverlay(self, value):
+        if value != self._position_overlay:
+            self._position_overlay = value
+            self.settingsUpdated.emit()
+            self.saveConfig()
+
+    @pyqtSlot()
+    def fail(self):
+        self.failed.emit()
 
     @pyqtSlot(str, result=str)
     def getName(self, name):

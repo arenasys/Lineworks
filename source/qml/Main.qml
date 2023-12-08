@@ -172,7 +172,7 @@ FocusReleaser {
                     TabArea {
                         hDivider: horizontalDivider
                         vDivider: verticalDivider
-                        area: modelData
+                        area: model.data
                         function releaseFocus() {
                             keyboardFocus.forceActiveFocus()
                         }
@@ -1116,7 +1116,7 @@ FocusReleaser {
 
                     delegate: Rectangle {
                         id: row
-                        property var entry: GUI.getHistory(modelData)
+                        property var entry: GUI.getHistory(model.data)
                         property var active: preview.locked && preview.target == entry
 
                         color: active ? COMMON.bg2_5 : (entryMouse.containsMouse ? COMMON.bg2 : COMMON.bg1_5)
@@ -1230,7 +1230,7 @@ FocusReleaser {
                                 onPressed: {
                                     preview.locked = false
                                     row.entry = null
-                                    GUI.clearHistoryEntries([modelData])
+                                    GUI.clearHistoryEntries([model.data])
                                 }
                             }
                             SContextMenuItem {
@@ -1238,7 +1238,7 @@ FocusReleaser {
                                 disabled: searchInput.text != "" || index == historyList.count-1
 
                                 onPressed: {
-                                    GUI.clearHistoryEntriesBelow(modelData)
+                                    GUI.clearHistoryEntriesBelow(model.data)
                                     searchInput.text = ""
                                     searchInput.search()
                                 }
