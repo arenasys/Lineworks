@@ -51,7 +51,7 @@ Item {
 
             property var start: 0
             property var end: 0
-            property var span: modelData.span
+            property var span: model.data.span
             property var showing: (start > minY && start < maxY) || (end > minY && end < maxY)
             property var changed: false
 
@@ -86,7 +86,7 @@ Item {
             }
 
             Connections {
-                target: modelData
+                target: model.data
                 function onSpanChanged() {
                     check()
                 }
@@ -101,13 +101,13 @@ Item {
 
                 model: ArrayModel {
                     id: incorrect
-                    source: modelData.incorrect
+                    source: model.data.incorrect
                 }
 
                 Item {
                     id: word
 
-                    property var span: modelData.span
+                    property var span: model.data.span
 
                     property var initial: true
 
@@ -172,7 +172,7 @@ Item {
                     }
 
                     Connections {
-                        target: modelData
+                        target: model.data
                         function onSpanChanged() {
                             layout()
                         }
@@ -232,9 +232,9 @@ Item {
                         anchors.topMargin: -17
                         acceptedButtons: Qt.RightButton
                         onPressed: {
-                            suggestionMenu.model = tab.spellchecker.getSuggestions(modelData.word)
+                            suggestionMenu.model = tab.spellchecker.getSuggestions(model.data.word)
                             suggestionMenu.span = word.getSpan()
-                            suggestionMenu.word = modelData.word
+                            suggestionMenu.word = model.data.word
                             suggestionMenu.popup()
                         }
                     }
@@ -252,10 +252,10 @@ Item {
         Instantiator {
             model: suggestionMenu.model
             SContextMenuItem {
-                text: modelData
+                text: model.data
 
                 onPressed: {
-                    spelling.replace(suggestionMenu.span.x, suggestionMenu.span.y, modelData)
+                    spelling.replace(suggestionMenu.span.x, suggestionMenu.span.y, model.data)
                 }
             }
             onObjectAdded: suggestionMenu.insertItem(index, object)
