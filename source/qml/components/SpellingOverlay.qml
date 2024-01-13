@@ -252,10 +252,10 @@ Item {
         Instantiator {
             model: suggestionMenu.model
             SContextMenuItem {
-                text: model.data
+                text: modelData
 
                 onPressed: {
-                    spelling.replace(suggestionMenu.span.x, suggestionMenu.span.y, model.data)
+                    spelling.replace(suggestionMenu.span.x, suggestionMenu.span.y, modelData)
                 }
             }
             onObjectAdded: suggestionMenu.insertItem(index, object)
