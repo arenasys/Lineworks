@@ -19,6 +19,8 @@ Item {
     property alias active: valueText.activeFocus
     property var pointSize: COMMON.pointValue
 
+    signal edited()
+
     property variant bindMap: null
     property var bindKey: null
 
@@ -53,7 +55,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 2
         anchors.bottomMargin: 0
-        clip: true
+        clip: valueText.clipping
 
         color: COMMON.bg2_5
         border.color: COMMON.bg4
@@ -86,8 +88,8 @@ Item {
         }
 
         Rectangle {
-            visible: valueText.activeFocus
-            width: Math.min(container.width+3, valueText.implicitWidth + 5)
+            visible: !valueText.clipping
+            width: valueText.implicitWidth + 5
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -104,7 +106,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.leftMargin: 10
             anchors.rightMargin: control.mini ? 3 : 5
-            clip: true
+            clip: valueText.clipping
 
             STextInput {
                 id: valueText
@@ -119,6 +121,8 @@ Item {
                 monospace: true
                 validator: control.validator
                 readOnly: control.disabled
+
+                property var clipping: !valueText.activeFocus
                 
                 onEditingFinished: {
                     if(text == "") {
@@ -127,6 +131,7 @@ Item {
                     } else {
                         control.value = text
                     }
+                    control.edited()
                 }
 
                 onActiveFocusChanged: {
@@ -142,7 +147,7 @@ Item {
                         if(valueText.text == control.defaultValue && control.defaultValue == "-1") {
                             valueText.text = ""
                         }
-                        valueText.selectAll()
+                        //valueText.selectAll()
                     }
                 }
 

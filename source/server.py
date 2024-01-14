@@ -15,20 +15,20 @@ import bson
 
 import inference
 
-DEFAULT_PASSWORD = "Lineworks"
+DEFAULT_KEY = "Lineworks"
 FRAGMENT_SIZE = 524288
 
-def get_scheme(password):
-    password = password.encode("utf8")
+def get_scheme(key):
+    key = key.encode("utf8")
     h = hashes.Hash(hashes.SHA256())
-    h.update(password)
+    h.update(key)
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=h.finalize()[:16],
         iterations=480000,
     )
-    return AESGCM(kdf.derive(password))
+    return AESGCM(kdf.derive(key))
 
 def encrypt(scheme, obj):
     data = bson.dumps(obj)
@@ -45,8 +45,8 @@ def decrypt(scheme, data):
 
 
 class RemoteServer():
-    def __init__(self, host, port, models_path, password):
-        self.password = password
+    def __init__(self, host, port, models_path, key):
+        self.key = key
         self.models_path = models_path
         
         self.inference = None
@@ -73,7 +73,7 @@ class RemoteServer():
         self.server.serve_forever()
             
     def handleLoop(self, conn):
-        scheme = get_scheme(self.password)
+        scheme = get_scheme(self.key)
 
         ctr = 0
         while True:
@@ -113,7 +113,7 @@ class RemoteServer():
                 try:
                     request = decrypt(scheme, bytes(data))
                 except Exception as e:
-                    error = "incorrect password"
+                    error = "incorrect key"
             else:
                 error = "invalid request"
             if request:
@@ -152,13 +152,13 @@ class RemoteServer():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='lineworks server')
     parser.add_argument('--bind', type=str, help='address (ip:port) to listen on', default="127.0.0.1:29999")
-    parser.add_argument('--password', type=str, help='password to derive encryption key from', default=DEFAULT_PASSWORD)
+    parser.add_argument('--key', type=str, help='key to derive encryption key from', default=DEFAULT_KEY)
     parser.add_argument('--models', type=str, help='models path', default="models")
     args = parser.parse_args()
 
     ip, port = args.bind.rsplit(":",1)
 
-    server = RemoteServer(ip, port, args.models, args.password)
+    server = RemoteServer(ip, port, args.models, args.key)
     server.start()
     
     try:

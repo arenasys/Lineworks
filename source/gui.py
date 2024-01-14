@@ -160,10 +160,11 @@ class GUI(QObject):
         }, strict=True)
 
         self._backend_parameters = misc.VariantMap(self, {
-            "endpoint": "ws://127.0.0.1:29999",
-            "password": "",
+            "endpoint": "",
+            "key": "",
             "mode": "Local",
-            "modes": ["Local", "Remote"]
+            "modes": ["Local", "Remote"],
+            "model": ""
         }, strict=True)
         self._backend_parameters.updated.connect(self.backendUpdated)
 
@@ -352,16 +353,23 @@ class GUI(QObject):
                 self._backend.terminate()
 
         self.resetState()
+        self.saveConfig()
 
         mode = self._backend_parameters.get("mode")
         if mode == "Local":
             self._backend = backend.LocalBackend(self)
         else:
             endpoint = self._backend_parameters.get("endpoint")
-            password = self._backend_parameters.get("password")
-            self._backend = backend.RemoteBackend(self, endpoint, password)
+            key = self._backend_parameters.get("key")
+            if endpoint.startswith("ws"):
+                self._backend = backend.RemoteBackend(self, endpoint, key)
+            else:
+                self._backend = backend.APIBackend(self, endpoint, key)
+            
         self._backend.response.connect(self.onResponse)
         self._backend.start()
+
+        self.workingUpdated.emit()
 
     @pyqtProperty(list, notify=historyUpdated)
     def history(self):
@@ -551,7 +559,7 @@ class GUI(QObject):
     
     @pyqtProperty(bool, notify=workingUpdated)
     def modelIsLoaded(self):
-        return self._current_model != None
+        return self._current_model != None or (self.isAPI and self._backend_parameters.get("model") != "")
     
     @pyqtProperty(bool, notify=workingUpdated)
     def isGenerating(self):
@@ -563,7 +571,11 @@ class GUI(QObject):
     
     @pyqtProperty(bool, notify=workingUpdated)
     def isRemote(self):
-        return self._backend and type(self._backend) == backend.RemoteBackend
+        return self._backend != None and type(self._backend) != backend.LocalBackend
+
+    @pyqtProperty(bool, notify=workingUpdated)
+    def isAPI(self):
+        return self._backend != None and type(self._backend) == backend.APIBackend
 
     @pyqtProperty(bool, notify=workingUpdated)
     def isConnected(self):
@@ -593,20 +605,24 @@ class GUI(QObject):
 
     @pyqtSlot()
     def generate(self):
-        if not self._current_model:
+        if not self.modelIsLoaded:
             self.failed.emit()
             return
 
         area = self._tabs.current
         self._current_tab = area._tabs[area.current]
         parameters = copy.deepcopy(self._gen_parameters._map)
-        if parameters["min_p"] > 0.0:
+        if parameters["min_p"] > 0.0 and not self.isAPI:
             parameters["top_p"] = 1.0
             parameters["top_k"] = 0
 
         parameters["prompt"] = self._current_tab.context()
         parameters["max_tokens"] = self._stop_parameters.get("max_tokens")
         parameters["stop_condition"] = self._stop_parameters.get("stop_condition")
+
+        if self.isAPI:
+            del parameters["min_p"]
+            parameters["model"] = self._backend_parameters.get("model")
 
         self._current_tab.startStream()
 
@@ -628,7 +644,7 @@ class GUI(QObject):
 
     @pyqtSlot()
     def regenerate(self):
-        if not self._current_model:
+        if not self.modelIsLoaded:
             self.failed.emit()
             return
         self.revert()
@@ -750,6 +766,10 @@ class GUI(QObject):
                 "position_overlay": self._position_overlay,
                 "light_mode": self._light_mode
             },
+            "remote": self._backend_parameters._map["mode"] == "Remote",
+            "endpoint": self._backend_parameters._map["endpoint"],
+            "key": self._backend_parameters._map["key"],
+            "api_model": self._backend_parameters._map["model"],
             "mode": self._mode
         }
         try:
@@ -786,11 +806,17 @@ class GUI(QObject):
         if presets and not self._gen_presets.get("preset") in presets:
             self._gen_presets.set("preset", presets[0])
 
+        self._backend_parameters.set("mode", "Remote" if config.get("remote", False) else "Local")
+        self._backend_parameters.set("endpoint", config.get("endpoint", ""))
+        self._backend_parameters.set("key", config.get("key", ""))      
+        self._backend_parameters.set("model", config.get("api_model", ""))
+
         settings = config.get("settings", {})
         self._spell_overlay = settings.get("spell_overlay", self._spell_overlay)
         self._stream_overlay = settings.get("stream_overlay", self._stream_overlay)
         self._position_overlay = settings.get("position_overlay", self._position_overlay)
         self._light_mode = settings.get("light_mode", self._light_mode)
+
         self.settingsUpdated.emit()
 
     def toJSON(self):

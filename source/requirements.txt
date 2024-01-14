@@ -7,3 +7,4 @@ cryptography==40.0.2
 requests==2.31.0
 cyhunspell==2.0.3
 cdifflib==1.2.6
+sseclient-py==1.8.0

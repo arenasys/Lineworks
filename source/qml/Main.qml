@@ -196,7 +196,7 @@ FocusReleaser {
 
                 Item {
                     width: parent.width
-                    height: 25 + (25*4) + 3
+                    height: 25 + (25*(GUI.isAPI ? 1 : 4)) + 3
 
                     RectangularGlow {
                         anchors.fill: parent
@@ -305,8 +305,23 @@ FocusReleaser {
                         anchors.fill: parent
                         anchors.topMargin: 25
 
+                        SInput {
+                            visible: GUI.isAPI
+                            height: visible ? 25 : 0
+                            width: parent.width
+                            label: "Name"
+                            bindMap: GUI.backendParameters
+                            bindKey: "model"
+                            override: !active ? (value == "" ? "No model" : "") : ""
+
+                            onEdited: {
+                                GUI.saveConfig()
+                            }
+                        }
+
                         SChoice {
-                            height: 25
+                            visible: !GUI.isAPI
+                            height: visible ? 25 : 0
                             width: parent.width
                             label: "Name"
                             bindMap: GUI.modelParameters
@@ -321,7 +336,8 @@ FocusReleaser {
                         }
 
                         SSlider {
-                            height: 25
+                            visible: !GUI.isAPI
+                            height: visible ? 25 : 0
                             width: parent.width
                             label: "Layer offload"
                             minValue: 0
@@ -341,7 +357,8 @@ FocusReleaser {
                         }
 
                         SSlider {
-                            height: 25
+                            visible: !GUI.isAPI
+                            height: visible ? 25 : 0
                             width: parent.width
                             label: "Context length"
                             minValue: 512
@@ -356,7 +373,8 @@ FocusReleaser {
                         }
 
                         Item {
-                            height: 4
+                            visible: !GUI.isAPI
+                            height: visible ? 4 : 0
                             width: parent.width
                             Rectangle {
                                 anchors.bottom: parent.bottom
@@ -368,8 +386,10 @@ FocusReleaser {
                         }
 
                         Row {
-                            height: 22
+                            visible: !GUI.isAPI
+                            height: visible ? 22 : 0
                             width: parent.width
+                            
 
                             leftPadding: 1
                             rightPadding: 1
@@ -409,7 +429,7 @@ FocusReleaser {
 
                 Item {
                     width: parent.width
-                    height: 25 + (25*(minPSlider.active ? 4 : 6)) + 3 + 3
+                    height: 25 + (25*(minPSlider.active ? 4 : (!GUI.isAPI ? 6 : 5))) + 3 + 3
 
                     RectangularGlow {
                         anchors.fill: parent
@@ -564,9 +584,10 @@ FocusReleaser {
 
                         SSlider {
                             id: minPSlider
-                            property var active: minPSlider.value != 0.0
+                            visible: !GUI.isAPI
+                            height: visible ? 25 : 0
+                            property var active: minPSlider.value != 0.0 && !GUI.isAPI
 
-                            height: 25
                             width: parent.width
                             label: "Min P"
                             minValue: 0
@@ -915,6 +936,7 @@ FocusReleaser {
                             label: "Endpoint"
                             bindMap: GUI.backendParameters
                             bindKey: "endpoint"
+                            override: !active ? (value == "" ? "URL" : "") : ""
                             pointSize: 9.0
                         }
 
@@ -922,9 +944,9 @@ FocusReleaser {
                             visible: backendMode.value == "Remote"
                             height: 25
                             width: parent.width
-                            label: "Password"
+                            label: "Key"
                             bindMap: GUI.backendParameters
-                            bindKey: "password"
+                            bindKey: "key"
                             override: !active ? (value == "" ? "None" : "") : ""
                             pointSize: 9.0
                         }

@@ -13,17 +13,20 @@ import inference
 
 MODELS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models")
 
-class LocalBackend(QThread):
+class CoreBackend(QThread):
     response = pyqtSignal(object)
-    def __init__(self, gui):
+    def __init__(self, inference, gui):
         super().__init__(gui)
         self.gui = gui
         self.stopping = False
         self.requests = []
-        self.inference = inference.Inference(MODELS_PATH, self.makeResponse)
+        self.inference = inference
+
+    def hello(self):
+        self.inference.process({"type":"options"})
         
     def run(self):
-        self.inference.process({"type":"options"})
+        self.hello()
 
         while not self.stopping:
             QApplication.processEvents()
@@ -49,11 +52,34 @@ class LocalBackend(QThread):
     def makeResponse(self, response):
         self.response.emit(response)
 
+import inference
+class LocalBackend(CoreBackend):
+    def __init__(self, gui):
+        super().__init__(inference.Inference(MODELS_PATH, self.makeResponse), gui)
+
+import api
+class APIBackend(CoreBackend):
+    def __init__(self, gui, endpoint, key):
+        super().__init__(api.API(endpoint, key, self.makeResponse), gui)
+
+    def hello(self):
+        self.makeResponse({"type": "status", "data": {"message": "connecting"}})
+
+        try:
+            self.inference.check()
+        except Exception as e:
+            self.makeResponse({"type": "error", "data": {"message": str(e)}})
+            self.makeResponse({"type": "status", "data": {"message": "disconnected"}})
+            return
+            
+        self.makeResponse({"type": "status", "data": {"message": "connected"}})
+        self.inference.process({"type":"options"})
+
 from server import *
 
 class RemoteBackend(QThread):
     response = pyqtSignal(object)
-    def __init__(self, gui, endpoint, password=None):
+    def __init__(self, gui, endpoint, key=None):
         super().__init__(gui)
         self.gui = gui
         self.stopping = False
@@ -63,9 +89,9 @@ class RemoteBackend(QThread):
         self.client = None
 
         self.scheme = None
-        if not password:
-            password = DEFAULT_PASSWORD
-        self.password = password
+        if not key:
+            key = DEFAULT_KEY
+        self.key = key
 
     def connect(self):
         if self.client:
@@ -82,6 +108,7 @@ class RemoteBackend(QThread):
             except Exception as e:
                 self.makeResponse({"type": "error", "data": {"message": str(e)}})
                 return
+            
         if self.stopping:
             return
         if self.client:
@@ -89,7 +116,7 @@ class RemoteBackend(QThread):
             self.requests += [{"type":"options"}]
 
     def run(self):
-        self.scheme = get_scheme(self.password)
+        self.scheme = get_scheme(self.key)
         self.connect()
         while self.client and not self.stopping:
             try:
@@ -117,7 +144,7 @@ class RemoteBackend(QThread):
                 break
             except Exception as e:
                 if type(e) == InvalidTag or type(e) == IndexError:
-                    self.makeResponse({"type": "error", "data": {"message": "incorrect password"}})
+                    self.makeResponse({"type": "error", "data": {"message": "incorrect key"}})
                 else:
                     self.makeResponse({"type": "error", "data": {"message": str(e)}})
                 break
