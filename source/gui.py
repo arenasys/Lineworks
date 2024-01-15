@@ -728,7 +728,11 @@ class GUI(QObject):
             self.workingUpdated.emit()
 
         if typ == "error":
-            self.errored.emit(response["data"]["message"].capitalize(), self._status.capitalize())
+            status = self._status
+            if status == "idle" and self._remote_status == "connecting":
+                status = self._remote_status
+
+            self.errored.emit(response["data"]["message"].capitalize(), status.capitalize())
             self._status = "idle"
             self._pending_model = None
 

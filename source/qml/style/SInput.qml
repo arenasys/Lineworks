@@ -18,6 +18,7 @@ Item {
     property var overlay: disabled
     property alias active: valueText.activeFocus
     property var pointSize: COMMON.pointValue
+    property var blankReset: true
 
     signal edited()
 
@@ -125,7 +126,7 @@ Item {
                 property var clipping: !valueText.activeFocus
                 
                 onEditingFinished: {
-                    if(text == "") {
+                    if(text == "" && control.blankReset) {
                         control.value = defaultValue
                         text = defaultValue
                     } else {

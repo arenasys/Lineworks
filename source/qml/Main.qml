@@ -922,6 +922,7 @@ FocusReleaser {
                             bindKey: "endpoint"
                             override: !active ? (value == "" ? "URL" : "") : ""
                             pointSize: 9.0
+                            blankReset: false
                         }
 
                         SInput {
@@ -933,6 +934,7 @@ FocusReleaser {
                             bindKey: "key"
                             override: !active ? (value == "" ? "None" : "") : ""
                             pointSize: 9.0
+                            blankReset: false
                         }
                     }
                 }

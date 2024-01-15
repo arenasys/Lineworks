@@ -6,6 +6,66 @@ import sseclient
 
 from inference import *
 
+def get_models(endpoint, key):
+    models = {}
+
+    if "api.openai.com" in endpoint:
+        response = requests.get(endpoint + "v1/models", headers={"Authorization": f"Bearer {key}"})
+        response.raise_for_status()
+        result = json.loads(response.text)
+        for model in result["data"]:
+            if "gpt-3.5-turbo-instruct" in model["id"] or model["id"] in {"davinci-002", "babbage-002"}:
+                models[model["id"]] = model["id"]
+    elif "api.together.xyz" in endpoint:
+        response = requests.get(endpoint + "models/info?=", headers={"Authorization": f"Bearer {key}"})
+        response.raise_for_status()
+        result = json.loads(response.text)
+        for model in result:
+            if "display_type" in model and model["display_type"] in {"chat", "language"}:
+                models[model["name"]] = model["display_name"]
+    else:
+        headers = {"Authorization": f"Bearer {key}"} if key.strip() else {}
+        response = requests.get(endpoint + "v1/models", headers=headers)
+        response.raise_for_status()
+        result = json.loads(response.text)
+        for model in result["data"]:
+            models[model["id"]] = model["id"]
+    
+    return models
+
+def get_stream(endpoint, key, parameters):
+    if "api.openai.com" in endpoint:
+        parameters["stream"] = True
+        parameters["frequency_penalty"] = parameters["repeat_penalty"]
+        del parameters["top_k"]
+        del parameters["repeat_penalty"]
+        headers = {"Authorization": f"Bearer {key}"}
+        response = requests.post(endpoint + "v1/completions", json=parameters, headers=headers, stream=True)
+    elif "api.together.xyz" in endpoint:
+        parameters["stream_tokens"] = True
+        parameters["repetition_penalty"] = parameters["repeat_penalty"]
+        del parameters["repeat_penalty"]
+        headers = {"Authorization": f"Bearer {key}"}
+        response = requests.post(endpoint + "v1/completions", json=parameters, headers=headers, stream=True)
+    else:
+        parameters["stream"] = True
+        parameters["frequency_penalty"] = parameters["repeat_penalty"]
+        del parameters["top_k"]
+        del parameters["repeat_penalty"]
+        headers = {"Authorization": f"Bearer {key}"} if key.strip() else {}
+        response = requests.post(endpoint + "v1/completions", json=parameters, headers=headers, stream=True)   
+    
+    response.raise_for_status()
+    
+    client = sseclient.SSEClient(response)
+    for event in client.events():
+        if event.data == "[DONE]":
+            break
+        data = json.loads(event.data)
+        yield data["choices"][0]["text"]
+
+    return
+
 class API():
     def __init__(self, endpoint, key, response):
         self.abort = False
@@ -41,12 +101,22 @@ class API():
         }
 
     def check(self):
-        response = requests.get(self.endpoint, headers=self.getHeaders())
-        if response.status_code != 400 and response.status_code != 200:
-            try:
-                response.raise_for_status()
-            except:
-                raise Exception(f"Connection failed with {response.status_code}: {response.text}")
+        try:
+            response = requests.get(self.endpoint, headers=self.getHeaders())
+        except requests.exceptions.ConnectTimeout:
+            raise Exception(f"Connection timed out")
+        except requests.exceptions.ConnectionError:
+            raise Exception(f"Connection refused")
+        except Exception:
+            raise Exception(f"Connection failed")
+        
+        try:
+            get_models(self.endpoint, self.key)
+        except requests.HTTPError as e:
+            raise Exception(e)
+        except Exception as e:
+            print(e)
+            raise Exception(f"Unknown Error")
 
     def process(self, request):
         try:
@@ -54,13 +124,7 @@ class API():
             typ = req["type"]
 
             if typ == "options":
-                response = requests.get(self.endpoint + "models/info?=", headers=self.getHeaders())
-                result = json.loads(response.text)
-                self.models = {}
-                for model in result:
-                    if "display_type" in model and model["display_type"] in {"chat", "lanaguage"}:
-                        self.models[model["name"]] = model["display_name"]
-                
+                self.models = get_models(self.endpoint, self.key)                
                 names = [v for _,v in self.models.items()]
                 self.respond({"type":"options", "data": {"models": names}})
 
@@ -75,27 +139,14 @@ class API():
                     sentance, _ = split_sentances(req["data"]["prompt"])
                     stop_context = sentance.lstrip()
 
-                payload = req["data"].copy()
-                payload["stream_tokens"] = True
-                payload["model"] = [k for k,v in self.models.items() if v == payload["model"]][0]
-
-                response = requests.post(self.endpoint + "inference", json=payload, headers=self.getHeaders(), stream=True)
-                try:
-                    response.raise_for_status()
-                except:
-                    raise Exception(f"{response.status_code}: {response.text}")
-                client = sseclient.SSEClient(response)   
+                parameters = req["data"].copy()
+                parameters["model"] = [k for k,v in self.models.items() if v == parameters["model"]][0]
 
                 output = ""
                 errored = False
                 stopping = False
 
-                for event in client.events():
-                    if event.data == "[DONE]":
-                        break
-                    partial_result = json.loads(event.data)
-                    next = partial_result["choices"][0]["text"]
-
+                for next in get_stream(self.endpoint, self.key, parameters):
                     if stop == "Sentance":
                         tmp = stop_context + output + next
 

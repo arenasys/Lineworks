@@ -254,5 +254,3 @@ class Inference():
                 return
         except Exception as e:
             self.setError(str(e))
-
-            
