@@ -25,19 +25,15 @@ Item {
         }
     }
 
-    RectangularGlow {
+    /*RectangularGlow {
         anchors.fill: marker
         visible: marker.failed || !root.working
-        glowRadius: 5
+        glowRadius: 3
         opacity: visible ? (marker.failed ? 0.75 : 0.25) : 0
         spread: 0.1
         color: marker.color
         cornerRadius: 10
-
-        Behavior on opacity {
-            PropertyAnimation{ duration: 300 }
-        }
-    }
+    }*/
 
     Rectangle {
         id: marker
@@ -65,15 +61,21 @@ Item {
             animation.restart()
         }
 
-        NumberAnimation on blink {
+        Timer {
             id: animation;
-            from: 1.0
-            to: 0.2
-            duration: 1000
-            loops: Animation.Infinite
+            interval: 500
+            repeat: true
             running: true
-            onDurationChanged: {
-                restart()
+            function restart() {
+                parent.blink = 1.0
+            }
+            onTriggered: {
+                if(parent.blink <= 0.5) {
+                    restart()
+                } else {
+                    parent.blink = 0.5
+                }
+                
             }
         }
 

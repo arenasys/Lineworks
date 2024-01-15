@@ -62,14 +62,6 @@ FocusReleaser {
             anchors.margins: -1
         }
 
-        /*FPSDisplay {
-            id: fpsItem
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.bottomMargin: 12
-            anchors.leftMargin: 15
-        }*/
-
         WorkingLine {
             id: saveIndicator
             anchors.left: parent.left
@@ -297,7 +289,7 @@ FocusReleaser {
                             from: 0
                             to: 360
                             duration: 1000
-                            running: parent.visible
+                            running: modelSpinner.visible
                         }
                     }
 
@@ -685,7 +677,7 @@ FocusReleaser {
                             from: 0
                             to: 360
                             duration: 1000
-                            running: parent.visible
+                            running: genSpinner.visible
                         }
 
                         SText {
@@ -811,7 +803,7 @@ FocusReleaser {
                             from: 0
                             to: 360
                             duration: 1000
-                            running: parent.visible
+                            running: conSpinner.visible
                         }
 
                         SIcon {
