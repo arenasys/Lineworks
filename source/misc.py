@@ -78,8 +78,8 @@ class FocusReleaser(QQuickItem):
             now = time.time()
             delta = (now - self.last)*1000
             self.last = now
-            if delta < 10:
-                return True
+            #if delta < 10:
+            #    return True
             
         return False
 
