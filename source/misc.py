@@ -65,7 +65,7 @@ class FocusReleaser(QQuickItem):
         self.setAcceptedMouseButtons(Qt.AllButtons)
         self.setFlag(QQuickItem.ItemAcceptsInputMethod, True)
         self.setFiltersChildMouseEvents(True)
-        self.last = time.time()
+        self.last = 0
     
     def onPress(self, source):
         if not source.hasActiveFocus():
@@ -74,17 +74,18 @@ class FocusReleaser(QQuickItem):
     def childMouseEventFilter(self, child, event):
         if event.type() == QEvent.MouseButtonPress:
             self.onPress(child)
-            
-            now = time.time()
-            delta = (now - self.last)*1000
-            self.last = now
-            #if delta < 10:
-            #    return True
+
+            now = event.timestamp()
+            if now != self.last:
+                delta = (now - self.last)
+                self.last = now
+                if delta < 10:
+                    return True
             
         return False
 
     def mousePressEvent(self, event):
-        self.last = time.time()
+        self.last = event.timestamp()
         self.onPress(self)
         event.setAccepted(False)
 
