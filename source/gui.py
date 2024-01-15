@@ -163,8 +163,7 @@ class GUI(QObject):
             "endpoint": "",
             "key": "",
             "mode": "Local",
-            "modes": ["Local", "Remote"],
-            "model": ""
+            "modes": ["Local", "Remote"]
         }, strict=True)
         self._backend_parameters.updated.connect(self.backendUpdated)
 
@@ -559,7 +558,7 @@ class GUI(QObject):
     
     @pyqtProperty(bool, notify=workingUpdated)
     def modelIsLoaded(self):
-        return self._current_model != None or (self.isAPI and self._backend_parameters.get("model") != "")
+        return self._current_model != None or (self.isAPI and self._model_parameters.get("model_paths") != [])
     
     @pyqtProperty(bool, notify=workingUpdated)
     def isGenerating(self):
@@ -622,7 +621,12 @@ class GUI(QObject):
 
         if self.isAPI:
             del parameters["min_p"]
-            parameters["model"] = self._backend_parameters.get("model")
+            parameters["model"] = self._model_parameters.get("model_path")
+        
+        if self.isRemote:
+            n_chrs = max(128, self._model_parameters.get("n_ctx") * 3)
+            if len(parameters["prompt"]) > n_chrs:
+                parameters["prompt"] = parameters["prompt"][len(parameters["prompt"])-n_chrs:]
 
         self._current_tab.startStream()
 
@@ -769,7 +773,6 @@ class GUI(QObject):
             "remote": self._backend_parameters._map["mode"] == "Remote",
             "endpoint": self._backend_parameters._map["endpoint"],
             "key": self._backend_parameters._map["key"],
-            "api_model": self._backend_parameters._map["model"],
             "mode": self._mode
         }
         try:
@@ -808,8 +811,7 @@ class GUI(QObject):
 
         self._backend_parameters.set("mode", "Remote" if config.get("remote", False) else "Local")
         self._backend_parameters.set("endpoint", config.get("endpoint", ""))
-        self._backend_parameters.set("key", config.get("key", ""))      
-        self._backend_parameters.set("model", config.get("api_model", ""))
+        self._backend_parameters.set("key", config.get("key", ""))
 
         settings = config.get("settings", {})
         self._spell_overlay = settings.get("spell_overlay", self._spell_overlay)

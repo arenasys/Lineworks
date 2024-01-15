@@ -196,7 +196,7 @@ FocusReleaser {
 
                 Item {
                     width: parent.width
-                    height: 25 + (25*(GUI.isAPI ? 1 : 4)) + 3
+                    height: 25 + (25*(GUI.isAPI ? 2 : 4)) + 3
 
                     RectangularGlow {
                         anchors.fill: parent
@@ -305,23 +305,8 @@ FocusReleaser {
                         anchors.fill: parent
                         anchors.topMargin: 25
 
-                        SInput {
-                            visible: GUI.isAPI
-                            height: visible ? 25 : 0
-                            width: parent.width
-                            label: "Name"
-                            bindMap: GUI.backendParameters
-                            bindKey: "model"
-                            override: !active ? (value == "" ? "No model" : "") : ""
-
-                            onEdited: {
-                                GUI.saveConfig()
-                            }
-                        }
-
                         SChoice {
-                            visible: !GUI.isAPI
-                            height: visible ? 25 : 0
+                            height: 25
                             width: parent.width
                             label: "Name"
                             bindMap: GUI.modelParameters
@@ -357,8 +342,7 @@ FocusReleaser {
                         }
 
                         SSlider {
-                            visible: !GUI.isAPI
-                            height: visible ? 25 : 0
+                            height: 25
                             width: parent.width
                             label: "Context length"
                             minValue: 512
