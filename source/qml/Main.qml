@@ -898,6 +898,16 @@ FocusReleaser {
             }
         }    
 
+        MouseArea {
+            visible: preview.locked
+            anchors.fill: parent
+            onPressed: {
+                preview.locked = false
+                preview.target = null
+                mouse.accepted = false
+            }
+        }
+
         Item {
             id: historyColumn
             anchors.top: parent.top
