@@ -11,7 +11,7 @@ Window {
     height: 600
     color: "#1a1a1a"
     title: "Lineworks";
-    flags: Qt.Window | Qt.WindowStaysOnTopHint
+    //flags: Qt.Window | Qt.WindowStaysOnTopHint
 
     Image {
         opacity: 0.5
@@ -36,8 +36,8 @@ Window {
     }
 
     Component.onCompleted: {
-        root.flags = Qt.Window
-        root.requestActivate()
+        //root.flags = Qt.Window
+        //root.requestActivate()
         COORDINATOR.load()
     }
 
