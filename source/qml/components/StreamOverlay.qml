@@ -113,7 +113,8 @@ Item {
 
             property var position: Qt.rect(0,0,0,0)
             property var vertical: position.width == 0
-            property var value: 1
+            property var value: COMMON.light ? 0.5 : 1
+            property var increment: COMMON.light ? 0.05 : 0.1
 
             visible: position.height != 0
 
@@ -122,7 +123,7 @@ Item {
             width: vertical ? 10 : (position.width+2)
             height: vertical ? position.height : 10
             radius: 5
-            color: COMMON.accent(0, 0.5, 0.4, value)
+            color: COMMON.light ? COMMON.accent(0, 0.4, 0.9, value) : COMMON.accent(0, 0.5, 0.4, value)
 
             Timer {
                 running: true
@@ -136,7 +137,7 @@ Item {
                     if(index == indicators.count-1 && stream.working) {
                         return
                     }
-                    parent.value -= 0.1
+                    parent.value -= parent.increment
                     if(parent.value <= 0) {
                         parent.value = 0
                     }
@@ -150,7 +151,7 @@ Item {
                 width: 2
                 height: 20
                 opacity: 0.8
-                color: stream.inactive && !stream.working ? COMMON.fg3 : COMMON.accent(0.0, 0.7, 0.4)
+                color: stream.inactive && !stream.working ? COMMON.fg3 : (COMMON.light ? COMMON.accent(0, 0.5, 0.8, value) : COMMON.accent(0.0, 0.7, 0.4))
             }
         }
     }

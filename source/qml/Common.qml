@@ -33,7 +33,13 @@ QtObject {
     property var selectionColor:     ["#999999", "#666666", "#666666"][scheme]
     property var selectionTextColor: ["#ffffff", "#000000", "#666666"][scheme]
 
-    function accent(hue, saturation=0.8, value=0.65, alpha=1.0) {
+    function accent(hue, saturation=0.8, value=null, alpha=1.0) {
+        if(value == null) {
+            value = light ? 0.8 : 0.65
+        }
+        if(light) {
+            hue += 0.2
+        }
         return Qt.hsva(hue+0.45, saturation, value, alpha)
     }
 }

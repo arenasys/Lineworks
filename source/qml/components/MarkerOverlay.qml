@@ -50,9 +50,19 @@ Item {
 
         property var horizontal: tab.marker == -1
 
-        color: failed ? COMMON.accent(-0.4, 0.8) : (root.inactive && !root.working ? COMMON.fg2 : COMMON.accent(0, 0.8))
-        opacity: failed ? 0.9 : (root.inactive ? 0.8 : blink)
-        property var blink: 1.0
+        color: {
+            if(failed) {
+                return COMMON.accent(-0.4, 0.8)
+            } else {
+                if(root.inactive && !root.working) {
+                    return COMMON.fg2
+                } else { 
+                    return COMMON.light ? COMMON.accent(0, 1.0) : COMMON.accent(0, 0.8)
+                }
+            }
+        }
+        opacity: failed ? 0.9 : (root.inactive ? 0.8 : (blink ? (COMMON.light ? 0.7 : 0.5) : 1.0))
+        property var blink: false
 
         onXChanged: {
             blinker.restart()
@@ -62,20 +72,15 @@ Item {
         }
 
         Timer {
-            id: blinker;
+            id: blinker
             interval: 500
             repeat: true
             running: GUI.windowActive
             function restart() {
-                parent.blink = 1.0
+                parent.blink = false
             }
             onTriggered: {
-                if(parent.blink <= 0.5) {
-                    restart()
-                } else {
-                    parent.blink = 0.5
-                }
-                
+                parent.blink = !parent.blink
             }
         }
 
