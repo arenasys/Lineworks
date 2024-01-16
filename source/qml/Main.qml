@@ -276,25 +276,12 @@ FocusReleaser {
                             inset: 8
                         }
 
-                        SIcon {
-                            id: modelSpinner
+                        LoadingSpinner {
                             visible: GUI.modelIsWorking
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
                             width: height
-                            iconColor: null
-                            opacity: 0.5
-                            icon: "qrc:/icons/loading-big.svg"
-                        }
-
-                        RotationAnimator {
-                            loops: Animation.Infinite
-                            target: modelSpinner
-                            from: 0
-                            to: 360
-                            duration: 1000
-                            running: modelSpinner.visible
                         }
                     }
 
@@ -663,26 +650,12 @@ FocusReleaser {
                         anchors.right: parent.right
                         height: 25
 
-
-                        SIcon {
-                            id: genSpinner
+                        LoadingSpinner {
                             visible: GUI.isGenerating
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
                             width: height
-                            iconColor: null
-                            opacity: 0.5
-                            icon: "qrc:/icons/loading-big.svg"
-                        }
-
-                        RotationAnimator {
-                            loops: Animation.Infinite
-                            target: genSpinner
-                            from: 0
-                            to: 360
-                            duration: 1000
-                            running: genSpinner.visible
                         }
 
                         SText {
@@ -789,26 +762,13 @@ FocusReleaser {
                         anchors.right: parent.right
                         height: 25
 
-                        SIcon {
-                            id: conSpinner
+                        LoadingSpinner {
                             visible: GUI.isConnecting
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.right: parent.right
                             width: height
-                            iconColor: null
-                            opacity: 0.5
-                            icon: "qrc:/icons/loading-big.svg"
                             tooltip: "Connecting..."
-                        }
-
-                        RotationAnimator {
-                            loops: Animation.Infinite
-                            target: conSpinner
-                            from: 0
-                            to: 360
-                            duration: 1000
-                            running: conSpinner.visible
                         }
 
                         SIcon {
@@ -854,7 +814,7 @@ FocusReleaser {
                             from: 0
                             to: -360
                             duration: 1000
-                            running: GUI.isConnecting
+                            running: GUI.isConnecting && GUI.windowActive
                             onRunningChanged: {
                                 restartButton.rotation = 0
                             }

@@ -52,17 +52,17 @@ Item {
 
         color: failed ? COMMON.accent(-0.4, 0.8) : (root.inactive && !root.working ? COMMON.fg2 : COMMON.accent(0, 0.8))
         opacity: failed ? 0.9 : (root.inactive ? 0.8 : blink)
-        property var blink: 0.8
+        property var blink: 1.0
 
         onXChanged: {
-            animation.restart()
+            blinker.restart()
         }
         onYChanged: {
-            animation.restart()
+            blinker.restart()
         }
 
         Timer {
-            id: animation;
+            id: blinker;
             interval: 500
             repeat: true
             running: GUI.windowActive

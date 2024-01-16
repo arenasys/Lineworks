@@ -152,26 +152,13 @@ SDialog {
                                 text: "Restart required"
                             }
 
-                            SIcon {
+                            LoadingSpinner {
                                 id: updateSpinner
                                 visible: GUI.updating
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 width: height
-                                iconColor: null
-                                opacity: 0.5
-                                inset: 1
-                                icon: "qrc:/icons/loading-big.svg"
-                            }
-
-                            RotationAnimator {
-                                loops: Animation.Infinite
-                                target: updateSpinner
-                                from: 0
-                                to: 360
-                                duration: 1000
-                                running: parent.visible
                             }
                         }
 
