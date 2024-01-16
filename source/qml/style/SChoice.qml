@@ -321,6 +321,11 @@ Item {
                     function onVisibleChanged() { canvas.requestPaint(); }
                 }
 
+                Connections {
+                    target: COMMON
+                    function onSchemeChanged() { canvas.requestPaint(); }
+                }
+
                 onPaint: {
                     var context = getContext("2d");
                     var ox = width/2
@@ -333,7 +338,7 @@ Item {
                     context.lineTo(ox+dx, oy-dy);
                     context.lineTo(ox, oy+dy);
                     context.closePath();
-                    context.fillStyle = COMMON.bg5;
+                    context.fillStyle = (COMMON.light || COMMON.classic) ?  COMMON.bg6 : COMMON.bg5;
                     context.fill();
                 }
             }

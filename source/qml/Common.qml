@@ -5,31 +5,33 @@ QtObject {
     readonly property var pointValue: 9.3
     readonly property var pointLabel: 9.4
 
-    property var light: false
+    property var light: scheme == 0
+    property var classic: scheme == 2
+    property var scheme: 1
 
-    property var bg00:  light ? "#e5e5e5" : "#1a1a1a"
-    property var bg0:   light ? "#e2e2e2" : "#1d1d1d"
-    property var bg0_5: light ? "#dfdfdf" : "#202020"
-    property var bg1:   light ? "#dbdbdb" : "#242424"
-    property var bg1_5: light ? "#d8d8d8" : "#272727"
-    property var bg2:   light ? "#d5d5d5" : "#2a2a2a"
-    property var bg2_5: light ? "#d2d2d2" : "#2d2d2d"
-    property var bg3:   light ? "#cfcfcf" : "#303030"
-    property var bg3_5: light ? "#c6c6c6" : "#393939"
-    property var bg4:   light ? "#9f9f9f" : "#404040"
-    property var bg5:   light ? "#8f8f8f" : "#505050"
-    property var bg6:   light ? "#7f7f7f" : "#606060"
-    property var bg7:   light ? "#6f6f6f" : "#707070"
+    property var bg00:  ["#e5e5e5", "#1a1a1a", "#1a1a1a"][scheme]
+    property var bg0:   ["#e2e2e2", "#1d1d1d", "#1e1e1e"][scheme]
+    property var bg0_5: ["#dfdfdf", "#202020", "#222222"][scheme]
+    property var bg1:   ["#dbdbdb", "#242424", "#272727"][scheme]
+    property var bg1_5: ["#d8d8d8", "#272727", "#2b2b2b"][scheme]
+    property var bg2:   ["#d5d5d5", "#2a2a2a", "#2f2f2f"][scheme]
+    property var bg2_5: ["#d2d2d2", "#2d2d2d", "#343434"][scheme]
+    property var bg3:   ["#cfcfcf", "#303030", "#383838"][scheme]
+    property var bg3_5: ["#c6c6c6", "#393939", "#444444"][scheme]
+    property var bg4:   ["#9f9f9f", "#404040", "#4e4e4e"][scheme]
+    property var bg5:   ["#8f8f8f", "#505050", "#646464"][scheme]
+    property var bg6:   ["#7f7f7f", "#606060", "#7a7a7a"][scheme]
+    property var bg7:   ["#6f6f6f", "#707070", "#909090"][scheme]
 
-    property var fg0:   light ? "#080808" : "#ffffff"
-    property var fg1:   light ? "#121212" : "#eeeeee"
-    property var fg1_3: light ? "#161616" : "#dddddd"
-    property var fg1_5: light ? "#222222" : "#cccccc"
-    property var fg2:   light ? "#444444" : "#aaaaaa"
-    property var fg3:   light ? "#555555" : "#909090"
+    property var fg0:   ["#080808", "#ffffff", "#ffffff"][scheme]
+    property var fg1:   ["#121212", "#eeeeee", "#eeeeee"][scheme]
+    property var fg1_3: ["#161616", "#dddddd", "#dddddd"][scheme]
+    property var fg1_5: ["#222222", "#cccccc", "#cccccc"][scheme]
+    property var fg2:   ["#444444", "#aaaaaa", "#aaaaaa"][scheme]
+    property var fg3:   ["#555555", "#909090", "#909090"][scheme]
 
-    property var selectionColor: light ? "#999999" : "#666666"
-    property var selectionTextColor: light ? "#ffffff" : "#000000"
+    property var selectionColor:     ["#999999", "#666666", "#666666"][scheme]
+    property var selectionTextColor: ["#ffffff", "#000000", "#666666"][scheme]
 
     function accent(hue, saturation=0.8, value=0.65, alpha=1.0) {
         return Qt.hsva(hue+0.45, saturation, value, alpha)

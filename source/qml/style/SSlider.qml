@@ -118,7 +118,7 @@ Item {
         anchors.margins: 2
         anchors.bottomMargin: 0
 
-        color: COMMON.light ? COMMON.bg2 : COMMON.bg2_5
+        color: (COMMON.light || COMMON.classic)  ? COMMON.bg2 : COMMON.bg2_5
 
         MouseArea {
             id: mouseArea
@@ -350,6 +350,7 @@ Item {
                 color: COMMON.bg3_5
 
                 Canvas {
+                    id: upperCanvas
                     anchors.fill: parent
                     renderStrategy: Canvas.Cooperative
 
@@ -359,6 +360,13 @@ Item {
 
                     onHeightChanged: {
                         requestPaint()
+                    }
+
+                    Connections {
+                        target: COMMON
+                        function onSchemeChanged() {
+                            upperCanvas.requestPaint()
+                        }
                     }
 
                     onPaint: {
@@ -371,7 +379,7 @@ Item {
                         context.lineTo(width / 2,f+height-(width-o));
                         context.lineTo(o,f+height-o);
                         context.closePath();
-                        context.fillStyle = COMMON.bg5;
+                        context.fillStyle = (COMMON.light || COMMON.classic) ?  COMMON.bg6 : COMMON.bg5;
                         context.fill();
                     }
                 }
@@ -397,6 +405,7 @@ Item {
                 color: COMMON.bg3_5
 
                 Canvas {
+                    id: lowerCanvas
                     anchors.fill: parent
                     renderStrategy: Canvas.Cooperative
 
@@ -406,6 +415,13 @@ Item {
 
                     onHeightChanged: {
                         requestPaint()
+                    }
+
+                    Connections {
+                        target: COMMON
+                        function onSchemeChanged() {
+                            lowerCanvas.requestPaint()
+                        }
                     }
 
                     onPaint: {
@@ -418,7 +434,7 @@ Item {
                         context.lineTo(width / 2, f+width-o);
                         context.lineTo(o,f+o);
                         context.closePath();
-                        context.fillStyle = COMMON.bg5;
+                        context.fillStyle = (COMMON.light || COMMON.classic) ?  COMMON.bg6 : COMMON.bg5;
                         context.fill();
                     }
                 }

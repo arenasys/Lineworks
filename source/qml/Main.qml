@@ -28,7 +28,7 @@ FocusReleaser {
     
     Component.onCompleted: {
         window.title = Qt.binding(function() { return GUI.title; })
-        COMMON.light = Qt.binding(function() { return GUI.lightMode; })
+        COMMON.scheme = Qt.binding(function() { return GUI.colorScheme; })
         GUI.ready()
     }
     

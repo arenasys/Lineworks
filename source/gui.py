@@ -9,10 +9,9 @@ from datetime import datetime
 import unicodedata
 IS_WIN = platform.system() == 'Windows'
 
-from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, QObject, QUrl, QThread, QMimeData, QByteArray
-from PyQt5.QtGui import QDesktopServices, QDrag, QClipboard, QSyntaxHighlighter
+from PyQt5.QtCore import pyqtSlot, pyqtProperty, pyqtSignal, QObject, QUrl, QThread
+from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtSql import QSqlQuery
 from PyQt5.QtQml import qmlRegisterUncreatableType
 
 import backend
@@ -183,7 +182,7 @@ class GUI(QObject):
         self._spell_overlay = True
         self._stream_overlay = True
         self._position_overlay = True
-        self._light_mode = False
+        self._color_scheme = 1
         self._mode = mode
 
         self.initConfig()
@@ -776,7 +775,7 @@ class GUI(QObject):
                 "spell_overlay": self._spell_overlay,
                 "stream_overlay": self._stream_overlay,
                 "position_overlay": self._position_overlay,
-                "light_mode": self._light_mode
+                "color_scheme": self._color_scheme
             },
             "remote": self._backend_parameters._map["mode"] == "Remote",
             "endpoint": self._backend_parameters._map["endpoint"],
@@ -825,7 +824,7 @@ class GUI(QObject):
         self._spell_overlay = settings.get("spell_overlay", self._spell_overlay)
         self._stream_overlay = settings.get("stream_overlay", self._stream_overlay)
         self._position_overlay = settings.get("position_overlay", self._position_overlay)
-        self._light_mode = settings.get("light_mode", self._light_mode)
+        self._color_scheme = settings.get("color_scheme", self._color_scheme)
 
         self.settingsUpdated.emit()
 
@@ -967,14 +966,14 @@ class GUI(QObject):
     def setMarker(self):
         self._tabs.currentTab().setMarker()
 
-    @pyqtProperty(bool, notify=settingsUpdated)
-    def lightMode(self):
-        return self._light_mode
+    @pyqtProperty(int, notify=settingsUpdated)
+    def colorScheme(self):
+        return self._color_scheme
     
-    @lightMode.setter
-    def lightMode(self, value):
-        if value != self._light_mode:
-            self._light_mode = value
+    @colorScheme.setter
+    def colorScheme(self, value):
+        if value != self._color_scheme:
+            self._color_scheme = value
             self.settingsUpdated.emit()
             self.saveConfig()
     

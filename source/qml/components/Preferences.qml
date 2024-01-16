@@ -179,7 +179,7 @@ SDialog {
                         SChoice {
                             id: colorScheme
                             label: "Color scheme"
-                            model: ["Dark", "Light"]
+                            model: ["Light", "Dark", "Classic"]
                             width: parent.width
                             height: 25
 
@@ -187,19 +187,19 @@ SDialog {
 
                             onValueChanged: {
                                 if(ready) {
-                                    GUI.lightMode = value == "Light"
+                                    GUI.colorScheme = currentIndex
                                 }
                             }
 
                             Component.onCompleted: {
-                                currentIndex = GUI.lightMode ? 1 : 0
+                                currentIndex = GUI.colorScheme
                                 ready = true
                             }
 
                             Connections {
                                 target: GUI
-                                function onLightModeChanged() {
-                                    var val = GUI.lightMode ? "Light" : "Dark"
+                                function onColorSchemeChanged() {
+                                    var val = colorScheme.model[GUI.colorScheme]
                                     if(colorScheme.value != val) {
                                         colorScheme.value = val
                                     }
