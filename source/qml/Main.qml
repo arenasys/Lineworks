@@ -11,7 +11,12 @@ import "components"
 FocusReleaser {
     id: focus
     property var window
+    property var active: window != null ? window.active : false
     anchors.fill: parent
+
+    onActiveChanged: {
+        GUI.windowActive = active
+    }
 
     Timer {
         interval: 50

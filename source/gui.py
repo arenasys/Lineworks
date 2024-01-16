@@ -122,6 +122,7 @@ class GUI(QObject):
     workingUpdated = pyqtSignal()
     historyUpdated = pyqtSignal()
     settingsUpdated = pyqtSignal()
+    windowUpdated = pyqtSignal()
 
     aboutToQuit = pyqtSignal()
     errored = pyqtSignal(str, str)
@@ -131,6 +132,9 @@ class GUI(QObject):
 
     def __init__(self, parent, mode):
         super().__init__(parent)
+
+        self._window_active = True
+        self._window_cursor_flash_time = parent.cursorFlashTime 
 
         self._gen_config = copy.deepcopy(DEFAULT_PRESETS)
         gen_default_name = DEFAULT_PRESET
@@ -1014,6 +1018,16 @@ class GUI(QObject):
     @pyqtSlot(str, result=str)
     def getName(self, name):
         return name.rsplit('\\',1)[-1].rsplit('/',1)[-1]
+
+    @pyqtProperty(bool, notify=windowUpdated)
+    def windowActive(self):
+        return self._window_active
+    
+    @windowActive.setter
+    def windowActive(self, value):
+        if value != self._window_active:
+            self._window_active = value
+            self.windowUpdated.emit()
 
 def registerTypes():
     qmlRegisterUncreatableType(HistoryEntry, "gui", 1, 0, "HistoryEntry", "Not a QML type")

@@ -65,7 +65,7 @@ Item {
             id: animation;
             interval: 500
             repeat: true
-            running: true
+            running: GUI.windowActive
             function restart() {
                 parent.blink = 1.0
             }
