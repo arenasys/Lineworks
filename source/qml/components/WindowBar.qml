@@ -273,11 +273,11 @@ SMenuBar {
             title: "Switch to..."
             
             SMenuItem {
-                text: "Sentance"
+                text: "Sentence"
                 shortcut: "Ctrl+1"
                 global: true
                 onPressed: {
-                    GUI.setStopCondition("Sentance")
+                    GUI.setStopCondition("Sentence")
                 }
             }
 
@@ -325,7 +325,7 @@ SMenuBar {
 
         Shortcut {
             sequences: ["Ctrl+1"]
-            onActivated: GUI.setStopCondition("Sentance")
+            onActivated: GUI.setStopCondition("Sentence")
         }
 
         Shortcut {

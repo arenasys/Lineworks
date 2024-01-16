@@ -159,7 +159,7 @@ class GUI(QObject):
         self._stop_parameters = misc.VariantMap(self, {
             "max_tokens": 128,
             "stop_condition": "None",
-            "stop_conditions": ["Sentance", "Paragraph", "Line", "None"]
+            "stop_conditions": ["Sentence", "Paragraph", "Line", "None"]
         }, strict=True)
 
         self._backend_parameters = misc.VariantMap(self, {

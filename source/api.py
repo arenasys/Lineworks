@@ -135,9 +135,9 @@ class API():
                 del req["data"]["stop_condition"]
 
                 stop_context = ""
-                if stop == "Sentance":
-                    sentance, _ = split_sentances(req["data"]["prompt"])
-                    stop_context = sentance.lstrip()
+                if stop == "Sentence":
+                    sentence, _ = split_sentences(req["data"]["prompt"])
+                    stop_context = sentence.lstrip()
 
                 parameters = req["data"].copy()
                 parameters["model"] = [k for k,v in self.models.items() if v == parameters["model"]][0]
@@ -147,16 +147,16 @@ class API():
                 stopping = False
 
                 for next in get_stream(self.endpoint, self.key, parameters):
-                    if stop == "Sentance":
+                    if stop == "Sentence":
                         tmp = stop_context + output + next
 
-                        sentance, sentances = split_sentances(tmp)
-                        sentances += [sentance]
+                        sentence, sentences = split_sentences(tmp)
+                        sentences += [sentence]
 
-                        if len(sentances) > 1:
-                            sentance = sentances[0]
-                            next_tmp = sentance[len(stop_context + output):]
-                            output_tmp = sentance[len(stop_context):]
+                        if len(sentences) > 1:
+                            sentence = sentences[0]
+                            next_tmp = sentence[len(stop_context + output):]
+                            output_tmp = sentence[len(stop_context):]
                             if not output_tmp.strip():
                                 stop_context = ""
                                 output += next

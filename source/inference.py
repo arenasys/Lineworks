@@ -16,22 +16,22 @@ def log_traceback(label):
     print(label, tb)
     return tb
 
-def split_sentances(text):
+def split_sentences(text):
     def get(i):
         if i < len(text):
             return f"{text[i]}"
         return None
     
-    sentances = []
-    sentance = ""
+    sentences = []
+    sentence = ""
     end = False
     alpha = False
     while text:
         if end:
             end = False
             alpha = False
-            sentances += [sentance]
-            sentance = ""
+            sentences += [sentence]
+            sentence = ""
         
         a, b, c = get(0), get(1), get(2)
 
@@ -39,31 +39,31 @@ def split_sentances(text):
             alpha = True
 
         if a in '.!?' and (b and b in '"') and alpha:
-            sentance += a + b
+            sentence += a + b
             text = text[2:]
             end = True
             continue
         
         if a in '.!?…' and ((b and b in ' ') or not b) and alpha:
-            sentance += a
+            sentence += a
             text = text[1:]
             end = True
             continue
 
         if not a in '\n' and (b and b in '\n') and alpha:
-            sentance += a + b
+            sentence += a + b
             text = text[1:]
             end = True
             continue
             
-        sentance += a
+        sentence += a
         text = text[1:]
 
     if end:
-        sentances += [sentance]
-        sentance = ""
+        sentences += [sentence]
+        sentence = ""
 
-    return sentance, sentances
+    return sentence, sentences
 
 class Inference():
     def __init__(self, models_path, response):
@@ -175,9 +175,9 @@ class Inference():
                 stream = self.llm(echo=False, stream=True, **req["data"])
 
                 stop_context = ""
-                if stop == "Sentance":
-                    sentance, _ = split_sentances(req["data"]["prompt"])
-                    stop_context = sentance.lstrip()
+                if stop == "Sentence":
+                    sentence, _ = split_sentences(req["data"]["prompt"])
+                    stop_context = sentence.lstrip()
 
                 output = ""
 
@@ -186,16 +186,16 @@ class Inference():
                 for o in stream:
                     next = o["choices"][0]["text"]
 
-                    if stop == "Sentance":
+                    if stop == "Sentence":
                         tmp = stop_context + output + next
 
-                        sentance, sentances = split_sentances(tmp)
-                        sentances += [sentance]
+                        sentence, sentences = split_sentences(tmp)
+                        sentences += [sentence]
 
-                        if len(sentances) > 1:
-                            sentance = sentances[0]
-                            next_tmp = sentance[len(stop_context + output):]
-                            output_tmp = sentance[len(stop_context):]
+                        if len(sentences) > 1:
+                            sentence = sentences[0]
+                            next_tmp = sentence[len(stop_context + output):]
+                            output_tmp = sentence[len(stop_context):]
                             if not output_tmp.strip():
                                 stop_context = ""
                                 output += next
