@@ -1027,6 +1027,7 @@ class GUI(QObject):
     def windowActive(self, value):
         if value != self._window_active:
             self._window_active = value
+            self.parent().setCursorFlashTime(1000 if self._window_active else 0)
             self.windowUpdated.emit()
 
 def registerTypes():

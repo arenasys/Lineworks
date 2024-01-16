@@ -223,37 +223,8 @@ Rectangle {
             font.pointSize: pointSize * COORDINATOR.scale
             color: COMMON.fg1
 
-            property var reset
-
-            cursorDelegate: Item {
-                id: del
-                visible: textArea.cursorVisible
-                width: 1
-                Rectangle {
-                    anchors.fill: parent
-
-                    Timer {
-                        interval: 700
-                        running: GUI.windowActive
-                        repeat: true
-
-                        property var reset: textArea.reset
-                        onResetChanged: {
-                            parent.visible = true
-                            if(running) {
-                               restart()
-                            }
-                        }
-                        onTriggered: {
-                            parent.visible = !parent.visible
-                        }
-                    }
-                }
-            }
-
             onCursorRectangleChanged: {
                 root.ensureVisible(cursorPosition)
-                textArea.reset = true
             }
 
             Keys.onPressed: {
