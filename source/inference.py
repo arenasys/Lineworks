@@ -172,7 +172,6 @@ class Inference():
                 stop = req["data"]["stop_condition"]
                 del req["data"]["stop_condition"]
 
-                self.llm.reset()
                 stream = self.llm(echo=False, stream=True, **req["data"])
 
                 stop_context = ""
