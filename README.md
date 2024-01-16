@@ -3,6 +3,8 @@
 An LLM integrated text editor built for cowriting. Focuses on efficient and hassle-free usage.
 
 ![example](https://github.com/arenasys/Lineworks/raw/master/screenshot.png)
+\*new\* Discord: [Arena Systems](https://discord.gg/WdjKqUGefU).
+
 ## Information
 To use: [Download](https://github.com/arenasys/Lineworks/archive/refs/heads/master.zip) Lineworks, extract the archive, and then run. NVIDIA or AMD* GPU acceleration is available to choose during install, otherwise choose CPU. Updating is done inside Lineworks via `File->Update`. Linux users run with `bash source/start.sh`.
 
