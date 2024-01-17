@@ -179,7 +179,7 @@ SDialog {
                         SChoice {
                             id: colorScheme
                             label: "Color scheme"
-                            model: ["Light", "Dark", "Classic"]
+                            model: ["Light", "Dark", "Classic", "Solarized"]
                             width: parent.width
                             height: 25
 
