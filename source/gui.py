@@ -168,7 +168,6 @@ class GUI(QObject):
             "mode": "Local",
             "modes": ["Local", "Remote"]
         }, strict=True)
-        self._backend_parameters.updated.connect(self.backendUpdated)
 
         self._history = {}
         self._history_order = []
@@ -185,8 +184,6 @@ class GUI(QObject):
         self._color_scheme = 1
         self._mode = mode
 
-        self.initConfig()
-
         self._dictionary = spellcheck.Dictionary()
 
         self._tabs = tabs.Tabs(self)
@@ -198,8 +195,6 @@ class GUI(QObject):
         self._current_model = None
         self._current_tab = None
 
-        parent.aboutToQuit.connect(self.stop)
-
         self._needRestart = False
         self._gitInfo = None
         self._gitCommit = None
@@ -209,6 +204,10 @@ class GUI(QObject):
         self.getVersionInfo()
 
         self._backend = None
+
+        self._backend_parameters.updated.connect(self.backendUpdated)
+        parent.aboutToQuit.connect(self.stop)
+        self.initConfig()
 
     @pyqtProperty('QString', notify=updated)
     def title(self):
@@ -340,6 +339,9 @@ class GUI(QObject):
         self._current_model = None
         self._status = "idle"
         self.setModels([])
+        if self._current_tab:
+            self._current_tab.endStream()
+            self._current_tab = None
         self.workingUpdated.emit()
 
     @pyqtSlot()

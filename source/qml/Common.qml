@@ -6,7 +6,7 @@ QtObject {
     readonly property var pointLabel: 9.4
 
     property var light: scheme == 0
-    property var classic: scheme == 2 || scheme == 3
+    property var classic: scheme == 2
     property var scheme: 1
 
     property var bg00:  ["#e5e5e5", "#1a1a1a", "#1a1a1a", "#001419"][scheme]
@@ -24,11 +24,11 @@ QtObject {
     property var bg7:   ["#6f6f6f", "#707070", "#909090", "#007d99"][scheme]
 
     property var fg0:   ["#080808", "#ffffff", "#ffffff", "#ffffff"][scheme]
-    property var fg1:   ["#121212", "#eeeeee", "#eeeeee", "#ffffff"][scheme]
-    property var fg1_3: ["#161616", "#dddddd", "#dddddd", "#ffffff"][scheme]
-    property var fg1_5: ["#222222", "#cccccc", "#cccccc", "#ffffff"][scheme]
-    property var fg2:   ["#444444", "#aaaaaa", "#aaaaaa", "#ffffff"][scheme]
-    property var fg3:   ["#555555", "#909090", "#909090", "#ffffff"][scheme]
+    property var fg1:   ["#121212", "#eeeeee", "#f0f0f0", "#f0f0f0"][scheme]
+    property var fg1_3: ["#161616", "#dddddd", "#eeeeee", "#eeeeee"][scheme]
+    property var fg1_5: ["#222222", "#cccccc", "#dddddd", "#dddddd"][scheme]
+    property var fg2:   ["#444444", "#aaaaaa", "#cccccc", "#cccccc"][scheme]
+    property var fg3:   ["#555555", "#909090", "#aaaaaa", "#aaaaaa"][scheme]
 
     property var selectionColor:     ["#999999", "#666666", "#666666", "#666666"][scheme]
     property var selectionTextColor: ["#ffffff", "#000000", "#000000", "#000000"][scheme]
