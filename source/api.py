@@ -23,6 +23,11 @@ def get_models(endpoint, key):
         for model in result:
             if "display_type" in model and model["display_type"] in {"chat", "language"}:
                 models[model["name"]] = model["display_name"]
+    elif "api.anthropic.com" in endpoint:
+        models = {
+            "claude-3-opus-20240229": "Claude 3 Opus",
+            "claude-3-sonnet-20240229": "Claude 3 Sonnet"
+        }
     else:
         headers = {"Authorization": f"Bearer {key}"} if key.strip() else {}
         response = requests.get(endpoint + "v1/models", headers=headers)
@@ -47,6 +52,48 @@ def get_stream(endpoint, key, parameters):
         del parameters["repeat_penalty"]
         headers = {"Authorization": f"Bearer {key}"}
         response = requests.post(endpoint + "v1/completions", json=parameters, headers=headers, stream=True)
+    elif "api.anthropic.com" in endpoint:
+        headers = {"x-api-key": f"{key}", "content-type" : "application/json", "anthropic-version": "2023-06-01"}
+
+        system = "[The AI follows instructions in square brackets.]"
+        prefill = ""
+
+        prompt = parameters["prompt"]        
+        context = re.sub(r"\[[^\]|\n]+\]", "", prompt)
+        if len(context) > 20:
+            context = "..." + context[-80:].split(" ",1)[-1].rstrip("\n")
+        has_prompt, has_context = prompt.strip() != "", context.strip() != ""
+        
+        messages = [
+            {"role": "user", "content": "You are a cowriting assistant, you continue writing from existing text. Recall the text we were writing."},
+        ]
+        if has_prompt:
+            messages.append({"role": "assistant", "content": 'The text you gave me was: ' + parameters["prompt"]})
+        else:
+            messages.append({"role": "assistant", "content": 'There is no text written so far.'})
+        
+        if has_prompt and has_context:
+            messages.append({"role": "user", "content": "Continue writing from that text as best you can. Continue exactly where it left off."})
+        elif has_prompt and not has_context:
+            messages.append({"role": "user", "content": "Write text based off this."})
+        elif not has_prompt:
+            messages.append({"role": "user", "content": "Write whatever text comes to mind."})
+
+        messages.append({"role": "assistant", "content": prefill + context})
+
+        parameters = {
+            "model": parameters["model"],
+            "system": system,
+            "max_tokens": parameters["max_tokens"],
+            "stop_sequences": [ '\n\nHuman:', '\n\nSystem:', '\n\nAssistant:' ],
+            "temperature": parameters["temperature"],
+            "top_p": parameters["top_p"],
+            "top_k": parameters["top_k"],
+            "stream": True,
+            "messages": messages
+        }
+
+        response = requests.post(endpoint + "v1/messages", json=parameters, headers=headers, stream=True)
     else:
         parameters["stream"] = True
         parameters["frequency_penalty"] = parameters["repeat_penalty"]
@@ -62,8 +109,15 @@ def get_stream(endpoint, key, parameters):
         if event.data == "[DONE]":
             break
         data = json.loads(event.data)
-        yield data["choices"][0]["text"]
 
+        if "choices" in data:
+            yield data["choices"][0]["text"]
+
+        if "type" in data:
+            if data["type"] == "message_stop":
+                break
+            if data["type"] == "content_block_delta":
+                yield data["delta"]["text"]
     return
 
 class API():
